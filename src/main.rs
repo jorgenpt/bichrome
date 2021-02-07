@@ -1,5 +1,9 @@
 #![deny(clippy::all)]
 #![forbid(unsafe_code)]
+// We use the console subsystem in debug builds, but use the Windows subsystem in release
+// builds so we don't have to allocate a console and pop up a command line window.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![cfg_attr(debug_assertions, windows_subsystem = "console")]
 
 mod bichrome_config;
 mod chrome_local_state;
