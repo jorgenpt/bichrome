@@ -21,7 +21,7 @@ struct State {
     profile: ProfilesData,
 }
 
-pub fn read_chrome_profiles_from_file<P: AsRef<Path>>(
+pub fn read_profiles_from_file<P: AsRef<Path>>(
     path: P,
 ) -> Result<HashMap<String, ChromeProfile>, Box<dyn Error>> {
     let file = File::open(path)?;

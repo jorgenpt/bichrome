@@ -14,7 +14,7 @@ pub struct Pattern {
 }
 
 impl Pattern {
-    pub fn matches(&self, url: &str) -> bool {
+    pub fn is_match(&self, url: &str) -> bool {
         self.compiled.is_match(url)
     }
 }
