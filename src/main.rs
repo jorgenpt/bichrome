@@ -32,8 +32,18 @@ const CHROME_EXE_PATH: &str = r"C:\Program Files (x86)\Google\Chrome\Application
 fn main() {
     // TODO: Use profiles + a distribution config to generate bichrome_config if it doesn't exist.
     // TODO: Read profile from %localappdata%.
-    let config = bichrome_config::read_config_from_file("bichrome_config.json").unwrap();
-    println!("config {:#?}", config);
+    let config = bichrome_config::read_config_from_file("bichrome_config.json");
+    let config = match config {
+        Ok(config) => {
+            println!("loaded config {:#?}", config);
+            config
+        }
+        Err(e) => {
+            println!("failed to parse config: {:?}", e);
+            println!("opening URLs without profile");
+            bichrome_config::Configuration::empty()
+        }
+    };
 
     for url in env::args().skip(1) {
         let mut chrome = Command::new(CHROME_EXE_PATH);

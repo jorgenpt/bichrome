@@ -51,6 +51,14 @@ pub struct Configuration {
     pub profile_selection: Vec<ProfilePatterns>,
 }
 
+impl Configuration {
+    pub fn empty() -> Configuration {
+        Configuration {
+            profile_selection: Vec::new(),
+        }
+    }
+}
+
 pub fn read_config_from_file<P: AsRef<Path>>(path: P) -> Result<Configuration, Box<dyn Error>> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
