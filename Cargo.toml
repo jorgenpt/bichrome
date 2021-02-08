@@ -5,9 +5,12 @@ authors = ["Jørgen P. Tjernø <jorgenpt@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+log = "0.4"
 regex = "1"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+simplelog = "^0.7.6"
+structopt = "0.3"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
