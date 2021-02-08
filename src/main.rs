@@ -72,9 +72,13 @@ fn main() {
 
     // TODO: Figure out what --reinstall / --hideicons / --showicons invocations are supposed to do.
     if opt.urls.is_empty() {
-        info!("direct launch -- registering URL handler");
-        if let Err(e) = os::register_urlhandler() {
-            error!("failed to register URL handler: {:?}", e);
+        if opt.dry_run {
+            info!("(dry-run) direct launch -- would register URL handler")
+        } else {
+            info!("direct launch -- registering URL handler");
+            if let Err(e) = os::register_urlhandler() {
+                error!("failed to register URL handler: {:?}", e);
+            }
         }
     }
 
