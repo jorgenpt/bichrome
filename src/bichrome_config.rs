@@ -1,12 +1,13 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-#[serde(from = "String", into = "String")]
+#[serde(try_from = "String", into = "String")]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Pattern {
     raw: String,
@@ -25,12 +26,12 @@ impl Into<String> for Pattern {
     }
 }
 
-impl From<String> for Pattern {
-    fn from(raw: String) -> Self {
-        Pattern {
-            compiled: Regex::new(&raw).unwrap(),
-            raw,
-        }
+impl TryFrom<String> for Pattern {
+    type Error = regex::Error;
+
+    fn try_from(raw: String) -> Result<Self, Self::Error> {
+        let compiled = Regex::new(&raw)?;
+        Ok(Pattern { compiled, raw })
     }
 }
 
