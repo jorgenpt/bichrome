@@ -40,18 +40,6 @@ struct Opt {
 //  - macOS path: "/Users/jorgenpt/Library/Application Support/Google/Chrome/Local State";
 //  - Windows path: r"C:\Users\jorgenpt\AppData\Local\Google\Chrome\User Data\Local State";
 
-fn choose_profile<'a>(config: &'a bichrome_config::Configuration, url: &str) -> Option<&'a String> {
-    for profile_selector in &config.profile_selection {
-        for pattern in &profile_selector.patterns {
-            if pattern.is_match(&url) {
-                return Some(&profile_selector.profile);
-            }
-        }
-    }
-
-    None
-}
-
 const CHROME_EXE_PATH: &str = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
 
 fn main() {
@@ -100,7 +88,7 @@ fn main() {
 
     for url in opt.urls {
         let mut args = Vec::new();
-        if let Some(profile_name) = choose_profile(&config, &url) {
+        if let Some(profile_name) = config.choose_profile(&url) {
             args.push(format!("--profile-directory={}", profile_name));
         }
         args.push(url);

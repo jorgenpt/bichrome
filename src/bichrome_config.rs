@@ -58,6 +58,17 @@ impl Configuration {
             profile_selection: Vec::new(),
         }
     }
+
+    pub fn choose_profile(&self, url: &str) -> Option<&String> {
+        for profile_selector in &self.profile_selection {
+            for pattern in &profile_selector.patterns {
+                if pattern.is_match(&url) {
+                    return Some(&profile_selector.profile);
+                }
+            }
+        }
+        None
+    }
 }
 
 pub fn read_config_from_file<P: AsRef<Path>>(path: P) -> Result<Configuration, Box<dyn Error>> {
