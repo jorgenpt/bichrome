@@ -8,7 +8,7 @@
 mod bichrome_config;
 mod chrome_local_state;
 
-use log::{error, info, trace, warn};
+use log::{debug, error, info, trace, warn};
 use simplelog::*;
 use std::fs::File;
 use std::process::{Command, Stdio};
@@ -95,11 +95,16 @@ fn main() {
 
         if opt.dry_run {
             info!(
-                "launching \"{}\" \"{}\"",
+                "(dry-run) \"{}\" \"{}\"",
                 CHROME_EXE_PATH,
                 args.join("\" \"")
             );
         } else {
+            debug!(
+                "launching \"{}\" \"{}\"",
+                CHROME_EXE_PATH,
+                args.join("\" \"")
+            );
             Command::new(CHROME_EXE_PATH)
                 .stdout(Stdio::null())
                 .stdin(Stdio::null())
