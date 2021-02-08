@@ -3,10 +3,17 @@ name = "bichrome"
 version = "0.1.0"
 authors = ["Jørgen P. Tjernø <jorgenpt@gmail.com>"]
 edition = "2018"
-#include = ['bichro']
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 regex = "1"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
+
+[package.metadata.winres]
+OriginalFilename = "bichrome.exe"
+FileDescription = "biChrome"
+ProductName = "biChrome"
+LegalCopyright = "Copyright © Jørgen Tjernø <jorgenpt@gmail.com>"
