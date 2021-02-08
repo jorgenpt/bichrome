@@ -7,6 +7,8 @@
 
 mod bichrome_config;
 mod chrome_local_state;
+#[cfg_attr(windows, path = "windows.rs")]
+mod os;
 
 use log::{debug, error, info, trace, warn};
 use simplelog::*;
@@ -68,7 +70,14 @@ fn main() {
     CombinedLogger::init(loggers).unwrap();
     trace!("command line options: {:?}", opt);
 
-    // TODO: Set up the appropriate registry entries to appear on a new install.
+    // TODO: Figure out what --reinstall / --hideicons / --showicons invocations are supposed to do.
+    if opt.urls.is_empty() {
+        info!("direct launch -- registering URL handler");
+        if let Err(e) = os::register_urlhandler() {
+            error!("failed to register URL handler: {:?}", e);
+        }
+    }
+
     // TODO: Use profiles + a distribution config to generate bichrome_config if it doesn't exist.
     // TODO: Read profile from %localappdata%.
 
