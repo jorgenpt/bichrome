@@ -19,10 +19,14 @@ const CLSID_PATH: &str = concatcp!(r"SOFTWARE\Classes\", CLASS_NAME);
 const DISPLAY_NAME: &str = "biChrome";
 const DESCRIPTION: &str = "Pick the right Chrome profile for each URL";
 
-pub fn register_urlhandler() -> Result<(), io::Error> {
+pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
     let exe_path = current_exe()?.to_str().unwrap_or_default().to_owned();
     let icon_path = format!("\"{}\",0", exe_path);
-    let open_command = format!("\"{}\" \"%1\"", exe_path);
+    let open_command = if let Some(extra_args) = extra_args {
+        format!("\"{}\" {} \"%1\"", exe_path, extra_args)
+    } else {
+        format!("\"{}\" \"%1\"", exe_path)
+    };
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 

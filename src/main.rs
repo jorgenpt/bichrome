@@ -100,32 +100,52 @@ fn main() {
         }
     };
 
-    for url in opt.urls {
-        let mut args = Vec::new();
-        if let Some(profile_name) = config.choose_profile(&url) {
-            args.push(format!("--profile-directory={}", profile_name));
-        }
-        args.push(url);
-
+    // TODO: Figure out what --reinstall / --hideicons / --showicons invocations are supposed to do.
+    if opt.urls.is_empty() {
         if opt.dry_run {
-            info!(
-                "(dry-run) \"{}\" \"{}\"",
-                CHROME_EXE_PATH,
-                args.join("\" \"")
-            );
+            info!("(dry-run) direct launch -- would register URL handler")
         } else {
-            debug!(
-                "launching \"{}\" \"{}\"",
-                CHROME_EXE_PATH,
-                args.join("\" \"")
-            );
-            Command::new(CHROME_EXE_PATH)
-                .stdout(Stdio::null())
-                .stdin(Stdio::null())
-                .stderr(Stdio::null())
-                .args(args)
-                .spawn()
-                .unwrap();
+            info!("direct launch -- registering URL handler");
+            let extra_args = if opt.debug {
+                Some("--debug")
+            } else if opt.verbose {
+                Some("--verbose")
+            } else {
+                None
+            };
+
+            if let Err(e) = os::register_urlhandler(extra_args) {
+                error!("failed to register URL handler: {:?}", e);
+            }
+        }
+    } else {
+        for url in opt.urls {
+            let mut args = Vec::new();
+            if let Some(profile_name) = config.choose_profile(&url) {
+                args.push(format!("--profile-directory={}", profile_name));
+            }
+            args.push(url);
+
+            if opt.dry_run {
+                info!(
+                    "(dry-run) \"{}\" \"{}\"",
+                    CHROME_EXE_PATH,
+                    args.join("\" \"")
+                );
+            } else {
+                debug!(
+                    "launching \"{}\" \"{}\"",
+                    CHROME_EXE_PATH,
+                    args.join("\" \"")
+                );
+                Command::new(CHROME_EXE_PATH)
+                    .stdout(Stdio::null())
+                    .stdin(Stdio::null())
+                    .stderr(Stdio::null())
+                    .args(args)
+                    .spawn()
+                    .unwrap();
+            }
         }
     }
 }
