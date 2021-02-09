@@ -5,7 +5,7 @@ use winreg::enums::*;
 use winreg::RegKey;
 
 const SPAD_CANONICAL_NAME: &str = "bichrome.exe";
-const CLASS_NAME: &str = "bichromeHTTP";
+const CLASS_NAME: &str = "bichromeHTML";
 
 // Configuration for "Set Program Access and Computer Defaults" aka SPAD. StartMenuInternet is the key for browsers
 // and they're expected to use the name of the exe as the key.
@@ -50,10 +50,10 @@ pub fn register_urlhandler() -> Result<(), io::Error> {
         let (spad_capabilities_startmenu, _) = spad_capabilities.create_subkey("StartMenu")?;
         spad_capabilities_startmenu.set_value("StartMenuInternet", &SPAD_CANONICAL_NAME)?;
 
-        let (spad_capabilities_startmenu_urlassociations, _) =
-            spad_capabilities_startmenu.create_subkey("URLAssociations")?;
-        spad_capabilities_startmenu_urlassociations.set_value("http", &CLASS_NAME)?;
-        spad_capabilities_startmenu_urlassociations.set_value("https", &CLASS_NAME)?;
+        let (spad_capabilities_urlassociations, _) =
+            spad_capabilities.create_subkey("URLAssociations")?;
+        spad_capabilities_urlassociations.set_value("http", &CLASS_NAME)?;
+        spad_capabilities_urlassociations.set_value("https", &CLASS_NAME)?;
 
         let (spad_defaulticon, _) = spad.create_subkey("DefaultIcon")?;
         spad_defaulticon.set_value("", &icon_path)?;
