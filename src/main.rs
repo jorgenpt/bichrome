@@ -55,9 +55,15 @@ fn main() {
         LevelFilter::Info
     };
 
+    let log_path = {
+        let mut log_path = std::env::current_exe().unwrap();
+        log_path.set_file_name("bichrome.log");
+        log_path
+    };
+
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
     // If we can write to bichrome.log, always use it.
-    if let Ok(file) = File::create("bichrome.log") {
+    if let Ok(file) = File::create(log_path) {
         loggers.push(WriteLogger::new(log_level, Config::default(), file));
     }
     // We only use the terminal logger in the debug build, since we don't allocate a console window otherwise.
@@ -70,23 +76,18 @@ fn main() {
     CombinedLogger::init(loggers).unwrap();
     trace!("command line options: {:?}", opt);
 
-    // TODO: Figure out what --reinstall / --hideicons / --showicons invocations are supposed to do.
-    if opt.urls.is_empty() {
-        if opt.dry_run {
-            info!("(dry-run) direct launch -- would register URL handler")
-        } else {
-            info!("direct launch -- registering URL handler");
-            if let Err(e) = os::register_urlhandler() {
-                error!("failed to register URL handler: {:?}", e);
-            }
-        }
-    }
+    let config_path = {
+        let mut config_path = std::env::current_exe().unwrap();
+        config_path.set_file_name("bichrome_config.json");
+        config_path
+    };
 
     // TODO: Use profiles + a distribution config to generate bichrome_config if it doesn't exist.
     // TODO: Read profile from %localappdata%.
 
     // We try to read the config, and otherwise just use an empty one instead.
-    let config = bichrome_config::read_config_from_file("bichrome_config.json");
+    debug!("attempting to load config from {}", config_path.display());
+    let config = bichrome_config::read_config_from_file(config_path);
     let config = match config {
         Ok(config) => {
             trace!("config: {:#?}", config);
