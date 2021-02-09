@@ -21,7 +21,7 @@ const DESCRIPTION: &str = "Pick the right Chrome profile for each URL";
 
 pub fn register_urlhandler() -> Result<(), io::Error> {
     let exe_path = current_exe()?.to_str().unwrap_or_default().to_owned();
-    let icon_path = format!("{},0", exe_path);
+    let icon_path = format!("\"{}\",0", exe_path);
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
