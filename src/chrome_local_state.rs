@@ -8,12 +8,27 @@ use std::path::Path;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChromeProfile {
-    pub hosted_domain: String,
+    hosted_domain: String,
 }
 
 #[derive(Serialize, Deserialize)]
-struct ProfilesData {
+pub struct ProfilesData {
     info_cache: HashMap<String, ChromeProfile>,
+}
+
+impl ProfilesData {
+    pub fn get_profiles(&self, hosted_domain: &str) -> Vec<&String> {
+        self.info_cache
+            .iter()
+            .filter_map(|(profile_name, profile)| {
+                if profile.hosted_domain == hosted_domain {
+                    Some(profile_name)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -21,17 +36,12 @@ struct State {
     profile: ProfilesData,
 }
 
-pub fn read_profiles_from_file<P: AsRef<Path>>(
-    path: P,
-) -> Result<HashMap<String, String>, Box<dyn Error>> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let state: State = serde_json::from_reader(reader)?;
+pub fn read_profiles_from_file<P: AsRef<Path>>(path: P) -> Result<ProfilesData, Box<dyn Error>> {
+    let state: State = {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        serde_json::from_reader(reader)?
+    };
 
-    Ok(state
-        .profile
-        .info_cache
-        .iter()
-        .map(|(k, v)| (k.to_owned(), v.hosted_domain.to_owned()))
-        .collect())
+    Ok(state.profile)
 }

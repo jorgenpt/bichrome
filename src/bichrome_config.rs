@@ -1,3 +1,4 @@
+use crate::chrome_local_state;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -60,6 +61,13 @@ impl Configuration {
         }
     }
 
+    /**
+     * Find the best matching Chrome profile for the given URL.
+     *
+     * @param url the url you're matching
+     * @return a profile name if one exists, or None if it should
+     * be opened with the default profile.
+     */
     pub fn choose_profile(&self, url: &str) -> Option<&String> {
         for profile_selector in &self.profile_selection {
             for pattern in &profile_selector.patterns {
@@ -85,50 +93,56 @@ pub fn read_config_from_file<P: AsRef<Path>>(path: P) -> Result<Configuration, B
     Ok(configuration)
 }
 
-#[derive(Debug, Clone)]
-pub struct MissingProfileMappingError {
-    pub profile: String,
-}
-
-impl fmt::Display for MissingProfileMappingError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "invalid first item to double")
-    }
-}
-
-impl Error for MissingProfileMappingError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
-    }
-}
-
 pub fn generate_config<P: AsRef<Path>>(
     template_path: P,
     path: P,
-    domain_profile_mapping: &HashMap<String, String>,
+    chrome_profiles_data: &chrome_local_state::ProfilesData,
 ) -> Result<(), Box<dyn Error>> {
-    let template_file = File::open(template_path)?;
-    let reader = BufReader::new(template_file);
-    let template: Template = serde_json::from_reader(reader)?;
-    let mut configuration = template.configuration;
-    for mut profile_selector in &mut configuration.profile_selection {
-        let hosted_domain = template
-            .profiles
-            .get(&profile_selector.profile)
-            .ok_or(MissingProfileMappingError {
-                profile: profile_selector.profile.to_owned(),
-            })?
-            .to_owned();
+    // Load the template config from JSON
+    let template: Template = {
+        let template_file = File::open(template_path)?;
+        let reader = BufReader::new(template_file);
+        serde_json::from_reader(reader)?
+    };
 
-        profile_selector.profile = domain_profile_mapping
-            .iter()
-            .find(|(_, v)| **v == hosted_domain)
-            .ok_or(MissingProfileMappingError {
-                profile: profile_selector.profile.to_owned(),
-            })?
-            .0
-            .to_owned();
-    }
+    // Create a mapping from placeholder profiles in the template to the appropriate
+    // profile from our Google Chrome Local State, silently omitting any entries that
+    // don't exist in your local state.
+    let domain_map: HashMap<&String, &String> = template
+        .profiles
+        .iter()
+        .filter_map(|(placeholder_name, hosted_domain)| {
+            let matching_profiles = chrome_profiles_data.get_profiles(&hosted_domain);
+            if let Some(first_matching_profile) = matching_profiles.first() {
+                Some((placeholder_name, *first_matching_profile))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Rebuild the profile_selection from the template config to only contain the entries
+    // that we have remappings for, and to use the real profile name
+    let remapped_profile_selection = template
+        .configuration
+        .profile_selection
+        .iter()
+        .filter_map(|profile_selector| {
+            if let Some(remapped_profile) = domain_map.get(&profile_selector.profile) {
+                Some(ProfilePatterns {
+                    profile: remapped_profile.to_string(),
+                    patterns: profile_selector.patterns.clone(),
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Finally construct a config that we can serialize to disk
+    let configuration = Configuration {
+        profile_selection: remapped_profile_selection,
+    };
 
     let file = File::create(path)?;
     let writer = BufWriter::new(file);
