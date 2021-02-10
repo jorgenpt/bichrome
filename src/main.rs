@@ -13,6 +13,7 @@ mod os;
 use log::{debug, error, info, trace, warn};
 use simplelog::*;
 use std::fs::File;
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use structopt::StructOpt;
 
@@ -44,6 +45,12 @@ struct Opt {
 
 const CHROME_EXE_PATH: &str = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
 
+fn get_relative_path(filename: &str) -> PathBuf {
+    let mut path = std::env::current_exe().unwrap();
+    path.set_file_name(filename);
+    path
+}
+
 fn main() {
     // First parse our command line options, so we can use it to configure the logging.
     let opt = Opt::from_args();
@@ -55,12 +62,7 @@ fn main() {
         LevelFilter::Info
     };
 
-    let log_path = {
-        let mut log_path = std::env::current_exe().unwrap();
-        log_path.set_file_name("bichrome.log");
-        log_path
-    };
-
+    let log_path = get_relative_path("bichrome.log");
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
     // If we can write to bichrome.log, always use it.
     if let Ok(file) = File::create(log_path) {
@@ -76,18 +78,14 @@ fn main() {
     CombinedLogger::init(loggers).unwrap();
     trace!("command line options: {:?}", opt);
 
-    let config_path = {
-        let mut config_path = std::env::current_exe().unwrap();
-        config_path.set_file_name("bichrome_config.json");
-        config_path
-    };
+    let config_path = get_relative_path("bichrome_config.json");
 
     // TODO: Use profiles + a distribution config to generate bichrome_config if it doesn't exist.
     // TODO: Read profile from %localappdata%.
 
     // We try to read the config, and otherwise just use an empty one instead.
     debug!("attempting to load config from {}", config_path.display());
-    let config = bichrome_config::read_config_from_file(config_path);
+    let config = bichrome_config::read_config_from_file(&config_path);
     let config = match config {
         Ok(config) => {
             trace!("config: {:#?}", config);
