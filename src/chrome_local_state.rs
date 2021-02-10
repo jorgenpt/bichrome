@@ -23,10 +23,15 @@ struct State {
 
 pub fn read_profiles_from_file<P: AsRef<Path>>(
     path: P,
-) -> Result<HashMap<String, ChromeProfile>, Box<dyn Error>> {
+) -> Result<HashMap<String, String>, Box<dyn Error>> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
     let state: State = serde_json::from_reader(reader)?;
 
-    Ok(state.profile.info_cache)
+    Ok(state
+        .profile
+        .info_cache
+        .iter()
+        .map(|(k, v)| (k.to_owned(), v.hosted_domain.to_owned()))
+        .collect())
 }

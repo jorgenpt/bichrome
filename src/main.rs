@@ -79,9 +79,26 @@ fn main() {
     trace!("command line options: {:?}", opt);
 
     let config_path = get_relative_path("bichrome_config.json");
+    if !config_path.exists() {
+        // TODO: Error handling when this doesn't exist?
+        let config_template_path = get_relative_path("bichrome_template.json");
 
-    // TODO: Use profiles + a distribution config to generate bichrome_config if it doesn't exist.
-    // TODO: Read profile from %localappdata%.
+        // TODO: Correctly detect this path
+        let local_state_path =
+            r"C:\Users\jorgenpt\AppData\Local\Google\Chrome\User Data\Local State";
+
+        // TODO: Handle if this fails to parse?
+        let profile_to_hosted_domain =
+            chrome_local_state::read_profiles_from_file(local_state_path).unwrap();
+
+        // TODO: Handle if this fails to generate?
+        bichrome_config::generate_config(
+            &config_template_path,
+            &config_path,
+            &profile_to_hosted_domain,
+        )
+        .unwrap();
+    }
 
     // We try to read the config, and otherwise just use an empty one instead.
     debug!("attempting to load config from {}", config_path.display());
