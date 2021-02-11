@@ -48,13 +48,13 @@ struct Opt {
 
 const CHROME_EXE_PATH: &str = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
 
-fn get_relative_path(filename: &str) -> PathBuf {
-    let mut path = std::env::current_exe().unwrap();
+fn get_relative_path(filename: &str) -> Result<PathBuf, std::io::Error> {
+    let mut path = std::env::current_exe()?;
     path.set_file_name(filename);
-    path
+    Ok(path)
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // First parse our command line options, so we can use it to configure the logging.
     let opt = Opt::from_args();
     let log_level = if opt.debug {
@@ -65,7 +65,7 @@ fn main() {
         LevelFilter::Info
     };
 
-    let log_path = get_relative_path("bichrome.log");
+    let log_path = get_relative_path("bichrome.log")?;
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
     // If we can write to bichrome.log, always use it.
     if let Ok(file) = File::create(log_path) {
@@ -78,13 +78,13 @@ fn main() {
         }
     };
 
-    CombinedLogger::init(loggers).unwrap();
+    CombinedLogger::init(loggers)?;
     trace!("command line options: {:?}", opt);
 
-    let config_path = get_relative_path("bichrome_config.json");
+    let config_path = get_relative_path("bichrome_config.json")?;
     if !config_path.exists() || opt.force_config_generation {
         // TODO: Error handling when this doesn't exist?
-        let config_template_path = get_relative_path("bichrome_template.json");
+        let config_template_path = get_relative_path("bichrome_template.json")?;
 
         // TODO: Correctly detect this path
         let local_state_path =
@@ -161,9 +161,10 @@ fn main() {
                     .stdin(Stdio::null())
                     .stderr(Stdio::null())
                     .args(args)
-                    .spawn()
-                    .unwrap();
+                    .spawn()?;
             }
         }
     }
+
+    Ok(())
 }
