@@ -34,6 +34,9 @@ struct Opt {
     /// Do not launch Chrome, just log what would've been launched
     #[structopt(long)]
     dry_run: bool,
+    /// Always generate a config, even if it exists or if we're using --dry-run
+    #[structopt(long)]
+    force_config_generation: bool,
 
     /// List of URLs to open
     urls: Vec<String>,
@@ -79,7 +82,7 @@ fn main() {
     trace!("command line options: {:?}", opt);
 
     let config_path = get_relative_path("bichrome_config.json");
-    if !config_path.exists() {
+    if !config_path.exists() || opt.force_config_generation {
         // TODO: Error handling when this doesn't exist?
         let config_template_path = get_relative_path("bichrome_template.json");
 
