@@ -11,7 +11,7 @@ pub struct ChromeProfile {
     hosted_domain: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ProfilesData {
     info_cache: HashMap<String, ChromeProfile>,
 }

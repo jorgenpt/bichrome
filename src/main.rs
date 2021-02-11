@@ -1,5 +1,4 @@
 #![deny(clippy::all)]
-#![forbid(unsafe_code)]
 // We use the console subsystem in debug builds, but use the Windows subsystem in release
 // builds so we don't have to allocate a console and pop up a command line window.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -83,24 +82,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config_path = get_relative_path("bichrome_config.json")?;
     if !config_path.exists() || opt.force_config_generation {
-        // TODO: Error handling when this doesn't exist?
+        info!("attempting to generate config at {}", config_path.display());
         let config_template_path = get_relative_path("bichrome_template.json")?;
+        if !config_template_path.exists() {
+            warn!(
+                "could not find template configuration at {}, will not generate config",
+                config_template_path.display()
+            );
+        } else if let Some(local_state_path) = os::get_chrome_local_state_path() {
+            let chrome_profiles_data =
+                chrome_local_state::read_profiles_from_file(local_state_path)?;
+            trace!("chrome profiles data: {:?}", chrome_profiles_data);
 
-        // TODO: Correctly detect this path
-        let local_state_path =
-            r"C:\Users\jorgenpt\AppData\Local\Google\Chrome\User Data\Local State";
-
-        // TODO: Handle if this fails to parse?
-        let profile_to_hosted_domain =
-            chrome_local_state::read_profiles_from_file(local_state_path).unwrap();
-
-        // TODO: Handle if this fails to generate?
-        bichrome_config::generate_config(
-            &config_template_path,
-            &config_path,
-            &profile_to_hosted_domain,
-        )
-        .unwrap();
+            if !opt.dry_run || opt.force_config_generation {
+                bichrome_config::generate_config(
+                    &config_template_path,
+                    &config_path,
+                    &chrome_profiles_data,
+                )?;
+            }
+        } else {
+            error!("unable to determine google chrome local state path, will not attempt to generate config from template");
+        }
     }
 
     // We try to read the config, and otherwise just use an empty one instead.

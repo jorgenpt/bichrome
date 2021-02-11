@@ -1,8 +1,7 @@
+use com::ComStrPtr;
 use const_format::concatcp;
-use std::env::current_exe;
 use std::io;
-use winreg::enums::*;
-use winreg::RegKey;
+use std::path::PathBuf;
 
 const SPAD_CANONICAL_NAME: &str = "bichrome.exe";
 const CLASS_NAME: &str = "bichromeHTML";
@@ -20,6 +19,10 @@ const DISPLAY_NAME: &str = "biChrome";
 const DESCRIPTION: &str = "Pick the right Chrome profile for each URL";
 
 pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
+    use std::env::current_exe;
+    use winreg::enums::*;
+    use winreg::RegKey;
+
     let exe_path = current_exe()?.to_str().unwrap_or_default().to_owned();
     let icon_path = format!("\"{}\",0", exe_path);
     let open_command = if let Some(extra_args) = extra_args {
@@ -91,4 +94,76 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
     }
 
     Ok(())
+}
+
+fn get_local_app_data_path() -> Option<PathBuf> {
+    use winapi::shared::winerror::SUCCEEDED;
+    use winapi::um::{knownfolders, shlobj};
+
+    let path_str = unsafe {
+        let mut path_ptr = ComStrPtr::null();
+        let hr = shlobj::SHGetKnownFolderPath(
+            &knownfolders::FOLDERID_LocalAppData,
+            0,
+            std::ptr::null_mut(),
+            path_ptr.mut_ptr(),
+        );
+
+        if SUCCEEDED(hr) {
+            Some(path_ptr.to_string())
+        } else {
+            None
+        }
+    };
+
+    path_str.map(PathBuf::from)
+}
+
+pub fn get_chrome_local_state_path() -> Option<PathBuf> {
+    let app_data_relative = r"Google\Chrome\User Data\Local State";
+    get_local_app_data_path().map(|base| base.join(app_data_relative))
+}
+
+mod com {
+    use winapi::um::winnt::PWSTR;
+
+    /**
+     * A small wrapper around a PWSTR whose memory is owned by COM.
+     */
+    pub struct ComStrPtr(PWSTR);
+
+    impl ComStrPtr {
+        pub fn null() -> ComStrPtr {
+            ComStrPtr(std::ptr::null_mut())
+        }
+
+        pub fn mut_ptr(&mut self) -> &mut PWSTR {
+            &mut self.0
+        }
+
+        pub fn ptr(&self) -> PWSTR {
+            self.0
+        }
+    }
+
+    impl ToString for ComStrPtr {
+        fn to_string(&self) -> String {
+            use std::slice;
+            unsafe {
+                let len = (0_isize..)
+                    .find(|&n| *self.0.offset(n) == 0)
+                    .expect("Couldn't find null terminator");
+                let array: &[u16] = slice::from_raw_parts(self.ptr(), len as usize);
+                String::from_utf16_lossy(array)
+            }
+        }
+    }
+
+    impl Drop for ComStrPtr {
+        fn drop(&mut self) {
+            use std::ffi::c_void;
+            use winapi::um::combaseapi;
+            unsafe { combaseapi::CoTaskMemFree(self.ptr() as *mut c_void) };
+        }
+    }
 }
