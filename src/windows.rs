@@ -2,6 +2,7 @@ use com::ComStrPtr;
 use const_format::concatcp;
 use std::io;
 use std::path::PathBuf;
+use windows_bindings;
 
 const SPAD_CANONICAL_NAME: &str = "bichrome.exe";
 const CLASS_NAME: &str = "bichromeHTML";
@@ -91,6 +92,16 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
         // UseUrl indicates that we don't need the shell to download a file for us -- we can handle direct
         // HTTP URLs.
         bichrome_registration.set_value("UseUrl", &1u32)?;
+    }
+
+    // Notify the shell about the updated URL associations.
+    unsafe {
+        windows_bindings::windows::win32::shell::SHChangeNotify(
+            windows_bindings::missing::SHCNE_ASSOCCHANGED,
+            windows_bindings::missing::SHCNF_DWORD | windows_bindings::missing::SHCNF_FLUSH,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        );
     }
 
     Ok(())

@@ -65,6 +65,7 @@ dependencies = [
  "simplelog",
  "structopt",
  "winapi",
+ "windows_bindings",
  "winreg",
  "winres",
 ]
@@ -125,6 +126,12 @@ dependencies = [
  "unicode-width",
  "vec_map",
 ]
+
+[[package]]
+name = "const-sha1"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb58b6451e8c2a812ad979ed1d83378caa5e927eef2622017a45f251457c2c9d"
 
 [[package]]
 name = "const_format"
@@ -409,6 +416,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "squote"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fccf17fd09e2455ea796d2ad267b64fa2c5cbd8701b2a93b555d2aa73449f7d"
+
+[[package]]
 name = "strsim"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -560,6 +573,84 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "windows"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "426842497696b65fbfc575691d94ef65befb248ed1a8c4361e293c724e7ebe61"
+dependencies = [
+ "const-sha1",
+ "windows_gen",
+ "windows_macros",
+ "windows_winmd",
+]
+
+[[package]]
+name = "windows_bindings"
+version = "0.1.0"
+dependencies = [
+ "windows",
+]
+
+[[package]]
+name = "windows_gen"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77ac8f0f06b647f42ee5459a8e1ffe41795647582c5926ec3fa363a91aad7d77"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "squote",
+ "syn",
+ "windows_gen_macros",
+ "windows_winmd",
+]
+
+[[package]]
+name = "windows_gen_macros"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23eac2169a20173b890c496f9e0e1149a92ef29fe4ba96026b72eec363b993f9"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "windows_macros"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9edc57c944eec106c7823b425ab0fd9f90163489e50a4df747f65fcf9030e1fb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "squote",
+ "syn",
+ "windows_gen",
+ "windows_winmd",
+]
+
+[[package]]
+name = "windows_winmd"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16d44527d04c9713312ed598f5d6ce3c453754dbfc03ddc376615be4415ffc88"
+dependencies = [
+ "windows_winmd_macros",
+]
+
+[[package]]
+name = "windows_winmd_macros"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2353f43f512938450614a176abf2b6cb31ac3b84fd71c88470fee571303e3f36"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "winreg"
