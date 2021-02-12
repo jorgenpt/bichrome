@@ -34,7 +34,7 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
-    // Configure a CLSID for us
+    // Configure our CLSID to point to the right command
     {
         let (clsid, _) = hkcu.create_subkey(CLSID_PATH)?;
         clsid.set_value("", &DISPLAY_NAME)?;
@@ -76,7 +76,7 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
         spad_shell_open_command.set_value("", &open_command)?;
     }
 
-    // Set up a registered application for our SPAD capabilities
+    // Set up a registered application for our SPAD capabilities (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#registeredapplications)
     {
         let (registered_applications, _) =
             hkcu.create_subkey(r"SOFTWARE\RegisteredApplications")?;
@@ -109,6 +109,7 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
 
 const CHROME_APPREG_PATH: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";
 
+/// Look up the path to Chrome in the Windows registry
 pub fn get_chrome_exe_path() -> Option<PathBuf> {
     use winreg::enums::*;
     use winreg::RegKey;
@@ -150,15 +151,14 @@ fn get_local_app_data_path() -> Option<PathBuf> {
     path_str.map(PathBuf::from)
 }
 
+/// Find the path to Chrome's "Local State" in the user's local app data folder
 pub fn get_chrome_local_state_path() -> Option<PathBuf> {
     let app_data_relative = r"Google\Chrome\User Data\Local State";
     get_local_app_data_path().map(|base| base.join(app_data_relative))
 }
 
 mod com {
-    /**
-     * A small wrapper around a PWSTR whose memory is owned by COM.
-     */
+    /// A small wrapper around a PWSTR whose memory is owned by COM.
     pub struct ComStrPtr(*mut u16);
 
     impl ComStrPtr {
