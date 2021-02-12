@@ -1,8 +1,10 @@
-# bichrome
+# <img src="assets/bichrome_icon.png?raw=true" width="24"> bichrome
 
 bichrome is a simple utility for Windows that can be configured as your default browser, which will choose between multiple Chrome profiles to open a URL in based on the configuration you specify.
 
 Running `bichrome.exe` without arguments will attempt to register bichrome as a browser at its current path. It's recommended that you put `bichrome.exe` somewhere permanent before this, as its config and log will live next to it. `%localappdata%\Programs\bichrome\bichrome.exe` is a good place to install it for your current user! bichrome does intentionally not support system-wide registration.
+
+Big thanks to Krista A. Leemhuis for the amazing icon!
 
 ## `bichrome_config.json`
 
@@ -22,7 +24,9 @@ You can find an example template in [example_config/bichrome_template.json]().
 
 ## License
 
-Licensed under either of
+The icon (in [assets/]()) is Copyright (c) 2021 Jørgen P. Tjernø <jorgenpt@gmail.com>. All Rights Reserved.
+
+The source code is licensed under either of
 
  * Apache License, Version 2.0
    ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
