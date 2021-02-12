@@ -4,11 +4,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![cfg_attr(debug_assertions, windows_subsystem = "console")]
 
-mod bichrome_config;
 mod chrome_local_state;
+mod config;
 #[cfg_attr(windows, path = "windows.rs")]
 mod os;
 
+use config::{generate_config, Configuration};
 use log::{debug, error, info, trace, warn};
 use simplelog::*;
 use std::fs::File;
@@ -105,11 +106,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             trace!("chrome profiles data: {:?}", chrome_profiles_data);
 
             if !opt.dry_run || opt.force_config_generation {
-                bichrome_config::generate_config(
-                    &config_template_path,
-                    &config_path,
-                    &chrome_profiles_data,
-                )?;
+                generate_config(&config_template_path, &config_path, &chrome_profiles_data)?;
             }
         } else {
             error!("unable to determine google chrome local state path, will not attempt to generate config from template");
@@ -118,7 +115,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // We try to read the config, and otherwise just use an empty one instead.
     debug!("attempting to load config from {}", config_path.display());
-    let config = bichrome_config::read_config_from_file(&config_path);
+    let config = Configuration::read_from_file(&config_path);
     let config = match config {
         Ok(config) => {
             trace!("config: {:#?}", config);
@@ -127,7 +124,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Err(e) => {
             error!("failed to parse config: {:?}", e);
             warn!("opening URLs without profile");
-            bichrome_config::Configuration::empty()
+            Configuration::empty()
         }
     };
 

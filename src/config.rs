@@ -61,6 +61,13 @@ impl Configuration {
         }
     }
 
+    pub fn read_from_file<P: AsRef<Path>>(path: P) -> Result<Configuration, Box<dyn Error>> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        let configuration = serde_json::from_reader(reader)?;
+        Ok(configuration)
+    }
+
     /**
      * Find the best matching Chrome profile for the given URL.
      *
@@ -84,13 +91,6 @@ impl Configuration {
 struct Template {
     profiles: HashMap<String, String>,
     configuration: Configuration,
-}
-
-pub fn read_config_from_file<P: AsRef<Path>>(path: P) -> Result<Configuration, Box<dyn Error>> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let configuration = serde_json::from_reader(reader)?;
-    Ok(configuration)
 }
 
 pub fn generate_config<P: AsRef<Path>>(
