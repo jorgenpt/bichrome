@@ -25,7 +25,7 @@ const DISPLAY_NAME: &str = "bichrome";
 const DESCRIPTION: &str = "Pick the right Chrome profile for each URL";
 
 /// Register associations with Windows for being a browser
-pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
+pub fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
     // This is used both by initial registration and OS-invoked reinstallation.
     // The expectations for the latter are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-reinstall-command
     use std::env::current_exe;
@@ -135,7 +135,7 @@ pub fn unregister_urlhandler() {
 }
 
 /// Set the "IconsVisible" flag to true (we don't have any icons)
-pub fn show_icons() -> Result<(), io::Error> {
+pub fn show_icons() -> io::Result<()> {
     // The expectations for this are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-show-icons-command
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let (spad_installinfo, _) = hkcu.create_subkey(SPAD_INSTALLINFO_PATH)?;
@@ -143,7 +143,7 @@ pub fn show_icons() -> Result<(), io::Error> {
 }
 
 /// Set the "IconsVisible" flag to false (we don't have any icons)
-pub fn hide_icons() -> Result<(), io::Error> {
+pub fn hide_icons() -> io::Result<()> {
     // The expectations for this are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-hide-icons-command
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     if let Ok(spad_installinfo) = hkcu.open_subkey(SPAD_INSTALLINFO_PATH) {

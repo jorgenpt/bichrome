@@ -13,6 +13,7 @@ use config::{generate_config, Configuration};
 use log::{debug, error, info, trace, warn};
 use simplelog::*;
 use std::fs::File;
+use std::io;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::{error::Error, fmt};
@@ -61,7 +62,7 @@ enum ExecutionMode {
     HideIcons,
 }
 
-fn get_exe_relative_path(filename: &str) -> Result<PathBuf, std::io::Error> {
+fn get_exe_relative_path(filename: &str) -> io::Result<PathBuf> {
     let mut path = std::env::current_exe()?;
     path.set_file_name(filename);
     Ok(path)
