@@ -14,6 +14,7 @@ use simplelog::*;
 use std::fs::File;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::{error::Error, fmt};
 use structopt::StructOpt;
 
 // This is the definition of our command line options
@@ -45,15 +46,24 @@ struct Opt {
 //  - macOS path: "/Users/jorgenpt/Library/Application Support/Google/Chrome/Local State";
 //  - Windows path: r"C:\Users\jorgenpt\AppData\Local\Google\Chrome\User Data\Local State";
 
-const CHROME_EXE_PATH: &str = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
-
 fn get_relative_path(filename: &str) -> Result<PathBuf, std::io::Error> {
     let mut path = std::env::current_exe()?;
     path.set_file_name(filename);
     Ok(path)
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[derive(Debug, Clone)]
+struct ChromeNotFoundError;
+
+impl fmt::Display for ChromeNotFoundError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unable to retrieve path to chrome.exe")
+    }
+}
+
+impl Error for ChromeNotFoundError {}
+
+fn main() -> Result<(), Box<dyn Error>> {
     // First parse our command line options, so we can use it to configure the logging.
     let opt = Opt::from_args();
     let log_level = if opt.debug {
@@ -140,6 +150,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     } else {
+        let chrome_path = os::get_chrome_exe_path().ok_or(ChromeNotFoundError)?;
         for url in opt.urls {
             let mut args = Vec::new();
             if let Some(profile_name) = config.choose_profile(&url) {
@@ -150,16 +161,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if opt.dry_run {
                 info!(
                     "(dry-run) \"{}\" \"{}\"",
-                    CHROME_EXE_PATH,
+                    chrome_path.display(),
                     args.join("\" \"")
                 );
             } else {
                 debug!(
                     "launching \"{}\" \"{}\"",
-                    CHROME_EXE_PATH,
+                    chrome_path.display(),
                     args.join("\" \"")
                 );
-                Command::new(CHROME_EXE_PATH)
+                Command::new(&chrome_path)
                     .stdout(Stdio::null())
                     .stdin(Stdio::null())
                     .stderr(Stdio::null())

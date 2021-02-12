@@ -107,6 +107,27 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
     Ok(())
 }
 
+const CHROME_APPREG_PATH: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";
+
+pub fn get_chrome_exe_path() -> Option<PathBuf> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    for root_name in &[HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
+        let root_key = RegKey::predef(*root_name);
+        if let Ok(subkey) = root_key.open_subkey(CHROME_APPREG_PATH) {
+            if let Ok(value) = subkey.get_value::<String, _>("") {
+                let path = PathBuf::from(value);
+                if path.exists() {
+                    return Some(path);
+                }
+            }
+        }
+    }
+
+    None
+}
+
 fn get_local_app_data_path() -> Option<PathBuf> {
     use winapi::shared::winerror::SUCCEEDED;
     use winapi::um::{knownfolders, shlobj};
