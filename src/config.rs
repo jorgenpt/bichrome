@@ -68,13 +68,8 @@ impl Configuration {
         Ok(configuration)
     }
 
-    /**
-     * Find the best matching Chrome profile for the given URL.
-     *
-     * @param url the url you're matching
-     * @return a profile name if one exists, or None if it should
-     * be opened with the default profile.
-     */
+    /// Find the best matching Chrome profile for the given URL.
+    /// Returns None if there aren't any matching patterns.
     pub fn choose_profile(&self, url: &str) -> Option<&String> {
         for profile_selector in &self.profile_selection {
             for pattern in &profile_selector.patterns {
