@@ -1,0 +1,5 @@
+{
+    "rust-analyzer.files.excludeDirs": [
+        "windows_bindings"
+    ]
+}
