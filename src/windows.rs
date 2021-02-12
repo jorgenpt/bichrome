@@ -16,7 +16,7 @@ const APPREG_PATH: &str = concatcp!(
 );
 const CLSID_PATH: &str = concatcp!(r"SOFTWARE\Classes\", CLASS_NAME);
 
-const DISPLAY_NAME: &str = "biChrome";
+const DISPLAY_NAME: &str = "bichrome";
 const DESCRIPTION: &str = "Pick the right Chrome profile for each URL";
 
 pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {

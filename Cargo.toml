@@ -23,6 +23,6 @@ winres = "0.1"
 
 [package.metadata.winres]
 OriginalFilename = "bichrome.exe"
-FileDescription = "biChrome"
-ProductName = "biChrome"
+FileDescription = "bichrome"
+ProductName = "bichrome"
 LegalCopyright = "Copyright © Jørgen Tjernø <jorgenpt@gmail.com>"
