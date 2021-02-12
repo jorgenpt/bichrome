@@ -43,7 +43,7 @@ struct Opt {
     urls: Vec<String>,
 }
 
-fn get_relative_path(filename: &str) -> Result<PathBuf, std::io::Error> {
+fn get_exe_relative_path(filename: &str) -> Result<PathBuf, std::io::Error> {
     let mut path = std::env::current_exe()?;
     path.set_file_name(filename);
     Ok(path)
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         LevelFilter::Info
     };
 
-    let log_path = get_relative_path("bichrome.log")?;
+    let log_path = get_exe_relative_path("bichrome.log")?;
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
     // If we can write to bichrome.log, always use it.
     if let Ok(file) = File::create(log_path) {
@@ -87,10 +87,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     CombinedLogger::init(loggers)?;
     trace!("command line options: {:?}", opt);
 
-    let config_path = get_relative_path("bichrome_config.json")?;
+    let config_path = get_exe_relative_path("bichrome_config.json")?;
     if !config_path.exists() || opt.force_config_generation {
         info!("attempting to generate config at {}", config_path.display());
-        let config_template_path = get_relative_path("bichrome_template.json")?;
+        let config_template_path = get_exe_relative_path("bichrome_template.json")?;
         if !config_template_path.exists() {
             warn!(
                 "could not find template configuration at {}, will not generate config",
