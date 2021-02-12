@@ -19,7 +19,11 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "--debug",
+                "--dry-run",
+                "--force-config-generation"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
