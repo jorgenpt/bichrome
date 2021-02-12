@@ -43,10 +43,6 @@ struct Opt {
     urls: Vec<String>,
 }
 
-// Chrome Local State paths:
-//  - macOS path: "/Users/jorgenpt/Library/Application Support/Google/Chrome/Local State";
-//  - Windows path: r"C:\Users\jorgenpt\AppData\Local\Google\Chrome\User Data\Local State";
-
 fn get_relative_path(filename: &str) -> Result<PathBuf, std::io::Error> {
     let mut path = std::env::current_exe()?;
     path.set_file_name(filename);
