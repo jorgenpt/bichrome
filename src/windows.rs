@@ -129,19 +129,18 @@ pub fn get_chrome_exe_path() -> Option<PathBuf> {
 }
 
 fn get_local_app_data_path() -> Option<PathBuf> {
-    use winapi::shared::winerror::SUCCEEDED;
-    use winapi::um::{knownfolders, shlobj};
+    use windows_bindings::windows::win32::shell::*;
 
     let path_str = unsafe {
         let mut path_ptr = ComStrPtr::null();
-        let hr = shlobj::SHGetKnownFolderPath(
-            &knownfolders::FOLDERID_LocalAppData,
+        let hr = SHGetKnownFolderPath(
+            &windows_bindings::missing::FOLDERID_LocalAppData,
             0,
-            std::ptr::null_mut(),
+            windows_bindings::windows::win32::system_services::HANDLE::default(),
             path_ptr.mut_ptr(),
         );
 
-        if SUCCEEDED(hr) {
+        if hr.is_ok() {
             Some(path_ptr.to_string())
         } else {
             None
@@ -157,23 +156,21 @@ pub fn get_chrome_local_state_path() -> Option<PathBuf> {
 }
 
 mod com {
-    use winapi::um::winnt::PWSTR;
-
     /**
      * A small wrapper around a PWSTR whose memory is owned by COM.
      */
-    pub struct ComStrPtr(PWSTR);
+    pub struct ComStrPtr(*mut u16);
 
     impl ComStrPtr {
         pub fn null() -> ComStrPtr {
             ComStrPtr(std::ptr::null_mut())
         }
 
-        pub fn mut_ptr(&mut self) -> &mut PWSTR {
+        pub fn mut_ptr(&mut self) -> *mut *mut u16 {
             &mut self.0
         }
 
-        pub fn ptr(&self) -> PWSTR {
+        pub fn ptr(&self) -> *const u16 {
             self.0
         }
     }
@@ -194,8 +191,8 @@ mod com {
     impl Drop for ComStrPtr {
         fn drop(&mut self) {
             use std::ffi::c_void;
-            use winapi::um::combaseapi;
-            unsafe { combaseapi::CoTaskMemFree(self.ptr() as *mut c_void) };
+            use windows_bindings::windows::win32::com::CoTaskMemFree;
+            unsafe { CoTaskMemFree(self.ptr() as *mut c_void) };
         }
     }
 }

@@ -64,7 +64,6 @@ dependencies = [
  "serde_json",
  "simplelog",
  "structopt",
- "winapi",
  "windows_bindings",
  "winreg",
  "winres",
