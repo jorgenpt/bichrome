@@ -3,6 +3,8 @@ use const_format::concatcp;
 use std::io;
 use std::path::PathBuf;
 use windows_bindings;
+use winreg::enums::*;
+use winreg::RegKey;
 
 const SPAD_CANONICAL_NAME: &str = "bichrome.exe";
 const CLASS_NAME: &str = "bichromeHTML";
@@ -10,19 +12,23 @@ const CLASS_NAME: &str = "bichromeHTML";
 // Configuration for "Set Program Access and Computer Defaults" aka SPAD. StartMenuInternet is the key for browsers
 // and they're expected to use the name of the exe as the key.
 const SPAD_PATH: &str = concatcp!(r"SOFTWARE\Clients\StartMenuInternet\", SPAD_CANONICAL_NAME);
+const SPAD_INSTALLINFO_PATH: &str = concatcp!(SPAD_PATH, "InstallInfo");
 const APPREG_PATH: &str = concatcp!(
     r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\",
     SPAD_CANONICAL_NAME
 );
 const CLSID_PATH: &str = concatcp!(r"SOFTWARE\Classes\", CLASS_NAME);
+const REGISTERED_APPLICATIONS_PATH: &str =
+    concatcp!(r"SOFTWARE\RegisteredApplications\", DISPLAY_NAME);
 
 const DISPLAY_NAME: &str = "bichrome";
 const DESCRIPTION: &str = "Pick the right Chrome profile for each URL";
 
+/// Register associations with Windows for being a browser
 pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
+    // This is used both by initial registration and OS-invoked reinstallation.
+    // The expectations for the latter are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-reinstall-command
     use std::env::current_exe;
-    use winreg::enums::*;
-    use winreg::RegKey;
 
     let exe_path = current_exe()?.to_str().unwrap_or_default().to_owned();
     let icon_path = format!("\"{}\",0", exe_path);
@@ -50,6 +56,8 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
     {
         let (spad, _) = hkcu.create_subkey(SPAD_PATH)?;
         spad.set_value("", &DISPLAY_NAME)?;
+        spad.set_value("LocalizedString", &DISPLAY_NAME)?;
+
         let (spad_capabilities, _) = spad.create_subkey("Capabilities")?;
         spad_capabilities.set_value("ApplicationName", &DISPLAY_NAME)?;
         spad_capabilities.set_value("ApplicationIcon", &icon_path)?;
@@ -66,11 +74,16 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
         let (spad_defaulticon, _) = spad.create_subkey("DefaultIcon")?;
         spad_defaulticon.set_value("", &icon_path)?;
 
+        // Set up reinstallation and show/hide icon commands (https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#registering-installation-information)
         let (spad_installinfo, _) = spad.create_subkey("InstallInfo")?;
-        spad_installinfo.set_value("ReinstallCommand", &format!("\"{}\" --reinstall", exe_path))?;
-        spad_installinfo.set_value("HideIconsCommand", &format!("\"{}\" --hideicons", exe_path))?;
-        spad_installinfo.set_value("ShowIconsCommand", &format!("\"{}\" --showicons", exe_path))?;
-        spad_installinfo.set_value("IconsVisible", &1u32)?;
+        spad_installinfo.set_value("ReinstallCommand", &format!("\"{}\" register", exe_path))?;
+        spad_installinfo.set_value("HideIconsCommand", &format!("\"{}\" hide-icons", exe_path))?;
+        spad_installinfo.set_value("ShowIconsCommand", &format!("\"{}\" show-icons", exe_path))?;
+
+        // Only update IconsVisible if it hasn't been set already
+        if let Err(_) = spad_installinfo.get_value::<u32, _>("IconsVisible") {
+            spad_installinfo.set_value("IconsVisible", &1u32)?;
+        }
 
         let (spad_shell_open_command, _) = spad.create_subkey(r"shell\open\command")?;
         spad_shell_open_command.set_value("", &open_command)?;
@@ -94,7 +107,13 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
         bichrome_registration.set_value("UseUrl", &1u32)?;
     }
 
-    // Notify the shell about the updated URL associations.
+    refresh_shell();
+
+    Ok(())
+}
+
+fn refresh_shell() {
+    // Notify the shell about the updated URL associations. (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#becoming-the-default-browser)
     unsafe {
         windows_bindings::windows::win32::shell::SHChangeNotify(
             windows_bindings::missing::SHCNE_ASSOCCHANGED,
@@ -103,16 +122,41 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
             std::ptr::null_mut(),
         );
     }
-
-    Ok(())
 }
 
-const CHROME_APPREG_PATH: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";
+/// Remove all the registry keys that we've set up
+pub fn unregister_urlhandler() {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let _ = hkcu.delete_subkey_all(SPAD_PATH);
+    let _ = hkcu.delete_subkey_all(CLSID_PATH);
+    let _ = hkcu.delete_subkey(REGISTERED_APPLICATIONS_PATH);
+    let _ = hkcu.delete_subkey_all(APPREG_PATH);
+    refresh_shell();
+}
+
+/// Set the "IconsVisible" flag to true (we don't have any icons)
+pub fn show_icons() -> Result<(), io::Error> {
+    // The expectations for this are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-show-icons-command
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let (spad_installinfo, _) = hkcu.create_subkey(SPAD_INSTALLINFO_PATH)?;
+    spad_installinfo.set_value("IconsVisible", &1u32)
+}
+
+/// Set the "IconsVisible" flag to false (we don't have any icons)
+pub fn hide_icons() -> Result<(), io::Error> {
+    // The expectations for this are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-hide-icons-command
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    if let Ok(spad_installinfo) = hkcu.open_subkey(SPAD_INSTALLINFO_PATH) {
+        spad_installinfo.set_value("IconsVisible", &0u32)
+    } else {
+        Ok(())
+    }
+}
 
 /// Look up the path to Chrome in the Windows registry
 pub fn get_chrome_exe_path() -> Option<PathBuf> {
-    use winreg::enums::*;
-    use winreg::RegKey;
+    const CHROME_APPREG_PATH: &str =
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";
 
     for root_name in &[HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
         let root_key = RegKey::predef(*root_name);

@@ -24,7 +24,7 @@ use structopt::StructOpt;
     name = "bichrome",
     about = "A program to pick Chrome profile based on the URL opened"
 )]
-struct Opt {
+struct CommandOptions {
     /// Use verbose logging
     #[structopt(short, long)]
     verbose: bool,
@@ -39,8 +39,26 @@ struct Opt {
     #[structopt(long)]
     force_config_generation: bool,
 
+    /// Choose the mode of operation
+    #[structopt(subcommand)]
+    mode: Option<ExecutionMode>,
+
     /// List of URLs to open
     urls: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, StructOpt)]
+enum ExecutionMode {
+    /// Open the given URLs in the correct browser
+    Open,
+    /// Register bichrome as a valid browser
+    Register,
+    /// Remove previous registration of bichrome, if any
+    Unregister,
+    /// Show application icons (changes a registry key and nothing else, as we don't have icons)
+    ShowIcons,
+    /// Hide application icons (changes a registry key and nothing else, as we don't have icons)
+    HideIcons,
 }
 
 fn get_exe_relative_path(filename: &str) -> Result<PathBuf, std::io::Error> {
@@ -60,12 +78,12 @@ impl fmt::Display for ChromeNotFoundError {
 
 impl Error for ChromeNotFoundError {}
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn init() -> Result<CommandOptions, Box<dyn Error>> {
     // First parse our command line options, so we can use it to configure the logging.
-    let opt = Opt::from_args();
-    let log_level = if opt.debug {
+    let options = CommandOptions::from_args();
+    let log_level = if options.debug {
         LevelFilter::Trace
-    } else if opt.verbose {
+    } else if options.verbose {
         LevelFilter::Debug
     } else {
         LevelFilter::Info
@@ -85,10 +103,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     CombinedLogger::init(loggers)?;
-    trace!("command line options: {:?}", opt);
+    trace!("command line options: {:?}", options);
 
+    Ok(options)
+}
+
+fn read_config(options: &CommandOptions) -> Result<Configuration, Box<dyn Error>> {
     let config_path = get_exe_relative_path("bichrome_config.json")?;
-    if !config_path.exists() || opt.force_config_generation {
+    if !config_path.exists() || options.force_config_generation {
         info!("attempting to generate config at {}", config_path.display());
         let config_template_path = get_exe_relative_path("bichrome_template.json")?;
         if !config_template_path.exists() {
@@ -101,7 +123,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 chrome_local_state::read_profiles_from_file(local_state_path)?;
             trace!("chrome profiles data: {:?}", chrome_profiles_data);
 
-            if !opt.dry_run || opt.force_config_generation {
+            if !options.dry_run || options.force_config_generation {
                 generate_config(&config_template_path, &config_path, &chrome_profiles_data)?;
             }
         } else {
@@ -112,7 +134,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // We try to read the config, and otherwise just use an empty one instead.
     debug!("attempting to load config from {}", config_path.display());
     let config = Configuration::read_from_file(&config_path);
-    let config = match config {
+    Ok(match config {
         Ok(config) => {
             trace!("config: {:#?}", config);
             config
@@ -122,53 +144,101 @@ fn main() -> Result<(), Box<dyn Error>> {
             warn!("opening URLs without profile");
             Configuration::empty()
         }
-    };
+    })
+}
 
-    // TODO: Figure out what --reinstall / --hideicons / --showicons invocations are supposed to do.
-    if opt.urls.is_empty() {
-        if opt.dry_run {
-            info!("(dry-run) direct launch -- would register URL handler")
-        } else {
-            info!("direct launch -- registering URL handler");
-            let extra_args = if opt.debug {
-                Some("--debug")
-            } else if opt.verbose {
-                Some("--verbose")
+fn main() -> Result<(), Box<dyn Error>> {
+    let options = init()?;
+
+    let mode = options.mode.unwrap_or(if options.urls.is_empty() {
+        ExecutionMode::Register
+    } else {
+        ExecutionMode::Open
+    });
+
+    if !matches!(mode, ExecutionMode::Open) && !options.urls.is_empty() {
+        return Err(Box::new(structopt::clap::Error::with_description(
+            &format!("specified a list of urls with mode {:?}", mode),
+            structopt::clap::ErrorKind::WrongNumberOfValues,
+        )));
+    }
+
+    match mode {
+        ExecutionMode::Register => {
+            if options.dry_run {
+                info!("(dry-run) would register URL handler")
             } else {
-                None
-            };
+                info!("registering URL handler");
+                let extra_args = if options.debug {
+                    Some("--debug")
+                } else if options.verbose {
+                    Some("--verbose")
+                } else {
+                    None
+                };
 
-            if let Err(e) = os::register_urlhandler(extra_args) {
-                error!("failed to register URL handler: {:?}", e);
+                if let Err(e) = os::register_urlhandler(extra_args) {
+                    error!("failed to register URL handler: {:?}", e);
+                }
             }
         }
-    } else {
-        let chrome_path = os::get_chrome_exe_path().ok_or(ChromeNotFoundError)?;
-        for url in opt.urls {
-            let mut args = Vec::new();
-            if let Some(profile_name) = config.choose_profile(&url) {
-                args.push(format!("--profile-directory={}", profile_name));
-            }
-            args.push(url);
-
-            if opt.dry_run {
-                info!(
-                    "(dry-run) \"{}\" \"{}\"",
-                    chrome_path.display(),
-                    args.join("\" \"")
-                );
+        ExecutionMode::Unregister => {
+            if options.dry_run {
+                info!("(dry-run) would unregister URL handler")
             } else {
-                debug!(
-                    "launching \"{}\" \"{}\"",
-                    chrome_path.display(),
-                    args.join("\" \"")
-                );
-                Command::new(&chrome_path)
-                    .stdout(Stdio::null())
-                    .stdin(Stdio::null())
-                    .stderr(Stdio::null())
-                    .args(args)
-                    .spawn()?;
+                info!("unregistering URL handler");
+                os::unregister_urlhandler();
+            }
+        }
+        ExecutionMode::ShowIcons => {
+            if options.dry_run {
+                info!("(dry-run) would mark icons as visible")
+            } else {
+                info!("marking icons as visible");
+                if let Err(e) = os::show_icons() {
+                    error!("failed to show icons: {:?}", e);
+                }
+            }
+        }
+        ExecutionMode::HideIcons => {
+            if options.dry_run {
+                info!("(dry-run) would mark icons as hidden")
+            } else {
+                info!("marking icons as hidden");
+                if let Err(e) = os::hide_icons() {
+                    error!("failed to hide icons: {:?}", e);
+                }
+            }
+        }
+        ExecutionMode::Open => {
+            let config = read_config(&options)?;
+            let chrome_path = os::get_chrome_exe_path().ok_or(ChromeNotFoundError)?;
+            for url in options.urls {
+                let mut args = Vec::new();
+                if let Some(profile_name) = config.choose_profile(&url) {
+                    args.push(format!("--profile-directory={}", profile_name));
+                }
+                args.push(url);
+
+                if options.dry_run {
+                    info!(
+                        "(dry-run) \"{}\" \"{}\"",
+                        chrome_path.display(),
+                        args.join("\" \"")
+                    );
+                } else {
+                    debug!(
+                        "launching \"{}\" \"{}\"",
+                        chrome_path.display(),
+                        args.join("\" \"")
+                    );
+                    Command::new(&chrome_path)
+                        .stdout(Stdio::null())
+                        .stdin(Stdio::null())
+                        .stderr(Stdio::null())
+                        .args(args)
+                        .spawn()?;
+                }
             }
         }
     }
