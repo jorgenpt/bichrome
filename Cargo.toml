@@ -3,6 +3,7 @@ name = "bichrome"
 version = "0.1.0"
 authors = ["Jørgen P. Tjernø <jorgenpt@gmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 const_format = "0.2"
