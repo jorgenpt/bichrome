@@ -55,7 +55,7 @@ pub fn register_urlhandler(extra_args: Option<&str>) -> Result<(), io::Error> {
         spad_capabilities.set_value("ApplicationIcon", &icon_path)?;
         spad_capabilities.set_value("ApplicationDescription", &DESCRIPTION)?;
 
-        let (spad_capabilities_startmenu, _) = spad_capabilities.create_subkey("StartMenu")?;
+        let (spad_capabilities_startmenu, _) = spad_capabilities.create_subkey("Startmenu")?;
         spad_capabilities_startmenu.set_value("StartMenuInternet", &SPAD_CANONICAL_NAME)?;
 
         let (spad_capabilities_urlassociations, _) =
