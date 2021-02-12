@@ -1,0 +1,30 @@
+{
+    "profiles": {
+        "My Corp": "mycorp.com",
+        "Personal": "NO_HOSTED_DOMAIN"
+    },
+    "configuration": {
+        "profile_selection": [
+            {
+                "profile": "Default",
+                "patterns": [
+                    "[^.]*.facebook.com/",
+                    "[^.]*.messenger.com/"
+                ]
+            },
+            {
+                "profile": "My Corp",
+                "patterns": [
+                    "[^.]*.mycorp.net/",
+                    "mycorp.atlassian.net/"
+                ]
+            },
+            {
+                "profile": "Default",
+                "patterns": [
+                    ".*"
+                ]
+            }
+        ]
+    }
+}

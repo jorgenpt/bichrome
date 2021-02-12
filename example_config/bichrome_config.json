@@ -1,0 +1,24 @@
+{
+    "profile_selection": [
+        {
+            "profile": "Default",
+            "patterns": [
+                "[^.]*.facebook.com/",
+                "[^.]*.messenger.com/"
+            ]
+        },
+        {
+            "profile": "Profile 1",
+            "patterns": [
+                "[^.]*.mycorp.net/",
+                "mycorp.atlassian.net/"
+            ]
+        },
+        {
+            "profile": "Default",
+            "patterns": [
+                ".*"
+            ]
+        }
+    ]
+}
