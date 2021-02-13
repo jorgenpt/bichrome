@@ -12,7 +12,7 @@ All of the configuration for bichrome comes from setting up a set of profile mat
 
 `bichrome_config.json` is expected to live next to `bichrome.exe`. Alternatively, you can distribute `bichrome.exe` with a `bichrome_template.json`, which tells bichrome how to generate a `bichrome_config.json` based on the expected domains of the profiles in the local Chrome install. This is useful if you want to distribute bichrome to coworkers -- you can set up a useful template, and bichrome will on first start attempt to match that template to the users config. See below for details.
 
-You can find an example config in [example_config/bichrome_config.json]().
+You can find an example config in [example_config/bichrome_config.json](example_config/bichrome_config.json).
 
 ## `bichrome_template.json`
 
@@ -20,11 +20,11 @@ When `bichrome.exe` is launched, if it can't find `bichrome_config.json`, it wil
 
 `bichrome_template.json` has two top-level keys, `"profiles"` and `"configuration"`. `"configuration"` has the full contents of a normal `bichrome_config.json`, but the profile names listed are _profile placeholder names_. When generating the configuration, bichrome will evaluate the entries in `"profiles"` -- the key is a _profile placeholder name_, and the value is the `hosted_domain` from your Chrome's Local State -- this is typically the part after the @ in your e-mail address. If you use `"NO_HOSTED_DOMAIN"` then we'll look for a default gmail.com account.
 
-You can find an example template in [example_config/bichrome_template.json]().
+You can find an example template in [example_config/bichrome_template.json](example_config/bichrome_template.json).
 
 ## License
 
-The icon (in [assets/]()) is Copyright (c) 2021 Jørgen P. Tjernø <jorgenpt@gmail.com>. All Rights Reserved.
+[The icon](assets/bichrome_icon.png) is copyright (c) 2021 [Jørgen P. Tjernø](mailto:jorgenpt@gmail.com). All Rights Reserved.
 
 The source code is licensed under either of
 
