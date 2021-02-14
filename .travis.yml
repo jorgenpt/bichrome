@@ -11,9 +11,7 @@ env:
     - CRATE_NAME=bichrome
 
 matrix:
-  include:
-    - env: TARGET=x86_64-apple-darwin
-      os: osx
+  include: []
 
 before_install:
   - set -e
