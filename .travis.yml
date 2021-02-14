@@ -14,7 +14,6 @@ matrix:
   include:
     - env: TARGET=x86_64-apple-darwin
       os: osx
-    - env: TARGET=x86_64-pc-windows-gnu
 
 before_install:
   - set -e
