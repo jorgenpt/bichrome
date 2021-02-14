@@ -1,3 +1,6 @@
+[![Travis CI Build status](https://www.travis-ci.com/jorgenpt/bichrome.svg?branch=main)](https://www.travis-ci.com/github/jorgenpt/bichrome)
+[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/epdwc70kl4sggl4v?svg=true)](https://ci.appveyor.com/project/jorgenpt/bichrome)
+
 # <img src="assets/bichrome_icon.png?raw=true" width="24"> bichrome
 
 bichrome is a simple utility for Windows that can be configured as your default browser, which will choose between multiple Chrome profiles to open a URL in based on the configuration you specify.
