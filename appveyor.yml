@@ -59,7 +59,6 @@ branches:
     # Release tags
     - /^v\d+\.\d+\.\d+.*$/
     - main
-    - macos-support
 
 # Building is done in the test phase, so we disable Appveyor's build phase.
 build: false
