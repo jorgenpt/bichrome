@@ -6,6 +6,7 @@ use log::{debug, error, trace, warn};
 use simplelog::*;
 use std::{
     error::Error,
+    fs::File,
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -26,6 +27,10 @@ fn get_application_support_path() -> Option<PathBuf> {
 #[allow(dead_code)]
 fn get_chrome_local_state_path() -> Option<PathBuf> {
     get_application_support_path().map(|path| path.join("Google/Chrome/Local State"))
+}
+
+fn get_log_path() -> Option<PathBuf> {
+    get_application_support_path().map(|path| path.join("com.bitspatter.bichrome/bichrome.log"))
 }
 
 fn get_config_path() -> Option<PathBuf> {
@@ -85,12 +90,17 @@ fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn main() -> Result<(), Box<dyn Error>> {
-    CombinedLogger::init(vec![TermLogger::new(
-        LevelFilter::Debug,
-        Config::default(),
-        TerminalMode::Mixed,
-    )
-    .unwrap()])?;
+    let log_level = LevelFilter::Debug;
+    let log_path = get_log_path().unwrap();
+    let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
+    // If we can write to bichrome.log, always use it.
+    if let Ok(file) = File::create(log_path) {
+        loggers.push(WriteLogger::new(log_level, Config::default(), file));
+    }
+    if let Some(logger) = TermLogger::new(log_level, Config::default(), TerminalMode::Mixed) {
+        loggers.push(logger)
+    }
+    CombinedLogger::init(loggers)?;
 
     let mut app = FruitApp::new();
 
