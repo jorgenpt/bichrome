@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::chrome_local_state;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
