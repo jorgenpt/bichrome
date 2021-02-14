@@ -12,7 +12,7 @@ use std::{
 };
 
 fn get_chrome_binary_path() -> PathBuf {
-    // TODO Could be:
+    // TODO Could be -- hopefully this would find it in Applications too?
     // `mdfind 'kMDItemCFBundleIdentifier = "com.google.Chrome"'`
     PathBuf::from("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 }
@@ -34,7 +34,8 @@ fn get_log_path() -> Option<PathBuf> {
 }
 
 fn get_config_path() -> Option<PathBuf> {
-    get_application_support_path().map(|path| path.join("com.bitspatter.bichrome/config.json"))
+    get_application_support_path()
+        .map(|path| path.join("com.bitspatter.bichrome/bichrome_config.json"))
 }
 
 fn init() -> Configuration {
