@@ -1,4 +1,4 @@
-use crate::config::Configuration;
+use crate::config::{Browser, Configuration};
 use fruitbasket::FruitApp;
 use fruitbasket::FruitCallbackKey;
 use fruitbasket::RunPeriod;
@@ -68,19 +68,40 @@ fn init() -> Configuration {
 fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
     let config = init();
 
-    let mut args = Vec::new();
-    if let Some(profile_name) = config.choose_profile(&url) {
-        args.push(format!("--profile-directory={}", profile_name));
-    }
-    args.push(url.to_string());
+    let browser = config.choose_browser(&url)?;
+    let (exe, args) = match browser {
+        Browser::Chrome(profile) => {
+            if let Some(argument) = profile.get_argument() {
+                let args = vec![argument, url.to_string()];
+                (get_chrome_binary_path().to_str().unwrap().to_string(), args)
+            } else {
+                // We use `open -b com.google.Chrome <url>` when you don't specify a profile as it
+                // responds faster, and it is the more "natural" way to open an URL in Chrome.
+                let args = ["-b", "com.google.Chrome", url]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect();
+                ("open".to_string(), args)
+            }
+        }
+        Browser::Firefox => {
+            // TODO If we support Firefox profiles, use something like the Chrome path with firefox -P <profile>
+            let args = ["-b", "org.mozilla.firefox", url]
+                .iter()
+                .map(|s| s.to_string())
+                .collect();
+            ("open".to_string(), args)
+        }
+        Browser::Safari => {
+            let args = ["-b", "com.apple.Safari", url]
+                .iter()
+                .map(|s| s.to_string())
+                .collect();
+            ("open".to_string(), args)
+        }
+    };
 
-    let chrome_path = get_chrome_binary_path();
-    debug!(
-        "launching \"{}\" \"{}\"",
-        chrome_path.display(),
-        args.join("\" \"")
-    );
-    Command::new(&chrome_path)
+    Command::new(&exe)
         .stdout(Stdio::null())
         .stdin(Stdio::null())
         .stderr(Stdio::null())

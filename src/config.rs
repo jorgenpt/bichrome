@@ -10,6 +10,43 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
+#[derive(Debug)]
+pub struct MissingProfileError(String);
+impl fmt::Display for MissingProfileError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "profile not declared in config: {}", self.0)
+    }
+}
+impl Error for MissingProfileError {}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(untagged)]
+pub enum ChromeProfile {
+    ByName { name: String },
+    ByHostedDomain { hosted_domain: String },
+    None {},
+}
+
+impl ChromeProfile {
+    pub fn get_argument(&self) -> Option<String> {
+        match self {
+            ChromeProfile::ByName { name } => Some(format!("--profile-directory={}", name)),
+            ChromeProfile::ByHostedDomain { hosted_domain: _ } => {
+                panic!("not implemented"); // TODO Implement lookup through chrome_local_state
+            }
+            ChromeProfile::None {} => None,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "browser")]
+pub enum Browser {
+    Chrome(ChromeProfile),
+    Firefox,
+    Safari,
+}
+
 #[serde(try_from = "String", into = "String")]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Pattern {
@@ -45,19 +82,23 @@ impl fmt::Display for Pattern {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProfilePatterns {
+pub struct ProfilePattern {
     pub profile: String,
     pub pattern: Pattern,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Configuration {
-    pub profile_selection: Vec<ProfilePatterns>,
+    pub default_profile: Option<String>,
+    pub profiles: HashMap<String, Browser>,
+    pub profile_selection: Vec<ProfilePattern>,
 }
 
 impl Configuration {
     pub fn empty() -> Configuration {
         Configuration {
+            default_profile: None,
+            profiles: HashMap::new(),
             profile_selection: Vec::new(),
         }
     }
@@ -69,15 +110,32 @@ impl Configuration {
         Ok(configuration)
     }
 
-    /// Find the best matching Chrome profile for the given URL.
-    /// Returns None if there aren't any matching patterns.
-    pub fn choose_profile(&self, url: &str) -> Option<&String> {
-        for profile_selector in &self.profile_selection {
-            if profile_selector.pattern.is_match(&url) {
-                return Some(&profile_selector.profile);
+    fn get_profile(&self, profile_name: &str) -> Result<&Browser, MissingProfileError> {
+        for (profile, browser) in &self.profiles {
+            if profile == profile_name {
+                return Ok(browser);
             }
         }
-        None
+
+        Err(MissingProfileError(profile_name.to_string()))
+    }
+
+    /// Find the best matching browser profile for the given URL.
+    pub fn choose_browser(&self, url: &str) -> Result<Browser, MissingProfileError> {
+        for profile_selector in &self.profile_selection {
+            if profile_selector.pattern.is_match(&url) {
+                return self
+                    .get_profile(&profile_selector.profile)
+                    .map(|b| b.clone());
+            }
+        }
+
+        // If there's a default_profile, use that, otherwise default to a Chrome without profiles.
+        if let Some(default_profile) = &self.default_profile {
+            self.get_profile(&default_profile).map(|b| b.clone())
+        } else {
+            Ok(Browser::Chrome(ChromeProfile::None {}))
+        }
     }
 }
 

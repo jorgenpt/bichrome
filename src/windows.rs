@@ -424,27 +424,32 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         }
         ExecutionMode::Open => {
             let config = read_config(&options)?;
-            let chrome_path = get_chrome_exe_path().ok_or(ChromeNotFoundError)?;
+
             for url in options.urls {
-                let mut args = Vec::new();
-                if let Some(profile_name) = config.choose_profile(&url) {
-                    args.push(format!("--profile-directory={}", profile_name));
-                }
-                args.push(url);
+                let browser = config.choose_browser(&url)?;
+                let (exe, args) = match browser {
+                    Browser::Chrome(profile) => {
+                        let mut args = Vec::new();
+                        if let Some(argument) = profile.get_argument() {
+                            args.push(argument);
+                        }
+                        args.push(url.to_string());
+
+                        (get_chrome_exe_path().ok_or(ChromeNotFoundError)?, args)
+                    }
+                    Browser::Firefox => {
+                        panic!("not implemented")
+                    }
+                    Browser::Safari => {
+                        panic!("not implemented")
+                    }
+                };
 
                 if options.dry_run {
-                    info!(
-                        "(dry-run) \"{}\" \"{}\"",
-                        chrome_path.display(),
-                        args.join("\" \"")
-                    );
+                    info!("(dry-run) \"{}\" \"{}\"", exe.display(), args.join("\" \""));
                 } else {
-                    debug!(
-                        "launching \"{}\" \"{}\"",
-                        chrome_path.display(),
-                        args.join("\" \"")
-                    );
-                    Command::new(&chrome_path)
+                    debug!("launching \"{}\" \"{}\"", exe.display(), args.join("\" \""));
+                    Command::new(&exe)
                         .stdout(Stdio::null())
                         .stdin(Stdio::null())
                         .stderr(Stdio::null())
