@@ -21,8 +21,7 @@
             },
             "args": [
                 "--debug",
-                "--dry-run",
-                "--force-config-generation"
+                "--dry-run"
             ],
             "cwd": "${workspaceFolder}"
         },

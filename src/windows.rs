@@ -340,7 +340,7 @@ fn init() -> Result<CommandOptions, Box<dyn Error>> {
     Ok(options)
 }
 
-fn read_config(options: &CommandOptions) -> Result<Configuration, Box<dyn Error>> {
+fn read_config() -> io::Result<Configuration> {
     let config_path = get_exe_relative_path("bichrome_config.json")?;
     // We try to read the config, and otherwise just use an empty one instead.
     debug!("attempting to load config from {}", config_path.display());
@@ -422,7 +422,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             }
         }
         ExecutionMode::Open => {
-            let config = read_config(&options)?;
+            let config = read_config()?;
 
             for url in options.urls {
                 let browser = config.choose_browser(&url)?;
