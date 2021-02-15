@@ -3,7 +3,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![cfg_attr(debug_assertions, windows_subsystem = "console")]
 
-use crate::config::Configuration;
+use crate::config::{Browser, Configuration};
 use com::ComStrPtr;
 use const_format::concatcp;
 use log::{debug, error, info, trace, warn};
