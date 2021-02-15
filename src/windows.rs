@@ -3,8 +3,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![cfg_attr(debug_assertions, windows_subsystem = "console")]
 
-use crate::chrome_local_state;
-use crate::config::{generate_config, Configuration};
+use crate::config::Configuration;
 use com::ComStrPtr;
 use const_format::concatcp;
 use log::{debug, error, info, trace, warn};
@@ -209,6 +208,7 @@ fn get_local_app_data_path() -> Option<PathBuf> {
 }
 
 /// Find the path to Chrome's "Local State" in the user's local app data folder
+#[allow(dead_code)]
 fn get_chrome_local_state_path() -> Option<PathBuf> {
     let app_data_relative = r"Google\Chrome\User Data\Local State";
     get_local_app_data_path().map(|base| base.join(app_data_relative))
@@ -271,9 +271,6 @@ struct CommandOptions {
     /// Do not launch Chrome, just log what would've been launched
     #[structopt(long)]
     dry_run: bool,
-    /// Always generate a config, even if it exists or if we're using --dry-run
-    #[structopt(long)]
-    force_config_generation: bool,
 
     /// Choose the mode of operation
     #[structopt(subcommand)]
@@ -346,27 +343,6 @@ fn init() -> Result<CommandOptions, Box<dyn Error>> {
 
 fn read_config(options: &CommandOptions) -> Result<Configuration, Box<dyn Error>> {
     let config_path = get_exe_relative_path("bichrome_config.json")?;
-    if !config_path.exists() || options.force_config_generation {
-        info!("attempting to generate config at {}", config_path.display());
-        let config_template_path = get_exe_relative_path("bichrome_template.json")?;
-        if !config_template_path.exists() {
-            warn!(
-                "could not find template configuration at {}, will not generate config",
-                config_template_path.display()
-            );
-        } else if let Some(local_state_path) = get_chrome_local_state_path() {
-            let chrome_profiles_data =
-                chrome_local_state::read_profiles_from_file(local_state_path)?;
-            trace!("chrome profiles data: {:?}", chrome_profiles_data);
-
-            if !options.dry_run || options.force_config_generation {
-                generate_config(&config_template_path, &config_path, &chrome_profiles_data)?;
-            }
-        } else {
-            error!("unable to determine google chrome local state path, will not attempt to generate config from template");
-        }
-    }
-
     // We try to read the config, and otherwise just use an empty one instead.
     debug!("attempting to load config from {}", config_path.display());
     let config = Configuration::read_from_file(&config_path);

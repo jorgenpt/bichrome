@@ -2,23 +2,19 @@
     "profile_selection": [
         {
             "profile": "Default",
-            "patterns": [
-                "[^.]*.facebook.com/",
-                "[^.]*.messenger.com/"
-            ]
-        },
-        {
-            "profile": "Profile 1",
-            "patterns": [
-                "[^.]*.mycorp.net/",
-                "mycorp.atlassian.net/"
-            ]
+            "pattern": "[^.]*.facebook.com/"
         },
         {
             "profile": "Default",
-            "patterns": [
-                ".*"
-            ]
+            "pattern": "[^.]*.messenger.com/"
+        },
+        {
+            "profile": "Profile 1",
+            "pattern": "[^.]*.mycorp.net/"
+        },
+        {
+            "profile": "Profile 1",
+            "pattern": "mycorp.atlassian.net/"
         }
     ]
 }
