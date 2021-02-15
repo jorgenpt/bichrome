@@ -101,6 +101,7 @@ fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
         }
     };
 
+    debug!("launching \"{}\" \"{}\"", exe, args.join("\" \""));
     Command::new(&exe)
         .stdout(Stdio::null())
         .stdin(Stdio::null())

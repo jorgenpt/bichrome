@@ -73,7 +73,10 @@ impl ChromeProfile {
                         ),
                     )))
                 } else {
-                    Ok(Some(matching_profiles[0].clone()))
+                    Ok(Some(format!(
+                        "--profile-directory={}",
+                        matching_profiles[0].clone()
+                    )))
                 }
             }
             ChromeProfile::None {} => Ok(None),
