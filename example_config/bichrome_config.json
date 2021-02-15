@@ -1,19 +1,32 @@
 {
+    "default_profile": "Fallback",
+    "profiles": {
+        "Fallback": {
+            "browser": "Safari"
+        },
+        "Personal": {
+            "browser": "Safari"
+        },
+        "Work": {
+            "browser": "Chrome",
+            "hosted_domain": "undeadlabs.com"
+        }
+    },
     "profile_selection": [
         {
-            "profile": "Default",
+            "profile": "Personal",
             "pattern": "[^.]*.facebook.com/"
         },
         {
-            "profile": "Default",
+            "profile": "Personal",
             "pattern": "[^.]*.messenger.com/"
         },
         {
-            "profile": "Profile 1",
+            "profile": "Work",
             "pattern": "[^.]*.mycorp.net/"
         },
         {
-            "profile": "Profile 1",
+            "profile": "Work",
             "pattern": "mycorp.atlassian.net/"
         }
     ]

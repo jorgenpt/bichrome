@@ -3,7 +3,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![cfg_attr(debug_assertions, windows_subsystem = "console")]
 
-use crate::config::Configuration;
+use crate::config::{Browser, Configuration};
 use com::ComStrPtr;
 use const_format::concatcp;
 use log::{debug, error, info, trace, warn};
@@ -208,8 +208,7 @@ fn get_local_app_data_path() -> Option<PathBuf> {
 }
 
 /// Find the path to Chrome's "Local State" in the user's local app data folder
-#[allow(dead_code)]
-fn get_chrome_local_state_path() -> Option<PathBuf> {
+pub fn get_chrome_local_state_path() -> Option<PathBuf> {
     let app_data_relative = r"Google\Chrome\User Data\Local State";
     get_local_app_data_path().map(|base| base.join(app_data_relative))
 }
@@ -424,27 +423,32 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         }
         ExecutionMode::Open => {
             let config = read_config(&options)?;
-            let chrome_path = get_chrome_exe_path().ok_or(ChromeNotFoundError)?;
+
             for url in options.urls {
-                let mut args = Vec::new();
-                if let Some(profile_name) = config.choose_profile(&url) {
-                    args.push(format!("--profile-directory={}", profile_name));
-                }
-                args.push(url);
+                let browser = config.choose_browser(&url)?;
+                let (exe, args) = match browser {
+                    Browser::Chrome(profile) => {
+                        let mut args = Vec::new();
+                        if let Some(argument) = profile.get_argument()? {
+                            args.push(argument);
+                        }
+                        args.push(url.to_string());
+
+                        (get_chrome_exe_path().ok_or(ChromeNotFoundError)?, args)
+                    }
+                    Browser::Firefox => {
+                        panic!("not implemented")
+                    }
+                    Browser::Safari => {
+                        panic!("not implemented")
+                    }
+                };
 
                 if options.dry_run {
-                    info!(
-                        "(dry-run) \"{}\" \"{}\"",
-                        chrome_path.display(),
-                        args.join("\" \"")
-                    );
+                    info!("(dry-run) \"{}\" \"{}\"", exe.display(), args.join("\" \""));
                 } else {
-                    debug!(
-                        "launching \"{}\" \"{}\"",
-                        chrome_path.display(),
-                        args.join("\" \"")
-                    );
-                    Command::new(&chrome_path)
+                    debug!("launching \"{}\" \"{}\"", exe.display(), args.join("\" \""));
+                    Command::new(&exe)
                         .stdout(Stdio::null())
                         .stdin(Stdio::null())
                         .stderr(Stdio::null())
