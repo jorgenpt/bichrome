@@ -1,23 +1,49 @@
 #![allow(dead_code)]
 
+use crate::{chrome_local_state::read_profiles_from_file, os::get_chrome_local_state_path};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::TryFrom;
-use std::error::Error;
+use std::error::Error as StdError;
 use std::fmt;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
+use std::result::Result as StdResult;
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum ErrorKind {
+    MissingProfile,
+    CantLocateChromeLocalState,
+    InvalidHostedDomain,
+}
 
 #[derive(Debug)]
-pub struct MissingProfileError(String);
-impl fmt::Display for MissingProfileError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "profile not declared in config: {}", self.0)
+pub struct Error {
+    /// Formated error message
+    pub message: String,
+    /// The type of error
+    pub kind: ErrorKind,
+}
+
+impl Error {
+    fn new(kind: ErrorKind, message: String) -> Self {
+        Error {
+            kind,
+            message: message,
+        }
     }
 }
-impl Error for MissingProfileError {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+impl StdError for Error {}
+
+type Result<T> = StdResult<T, Error>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
@@ -28,13 +54,29 @@ pub enum ChromeProfile {
 }
 
 impl ChromeProfile {
-    pub fn get_argument(&self) -> Option<String> {
+    pub fn get_argument(&self) -> StdResult<Option<String>, Box<dyn StdError>> {
         match self {
-            ChromeProfile::ByName { name } => Some(format!("--profile-directory={}", name)),
-            ChromeProfile::ByHostedDomain { hosted_domain: _ } => {
-                panic!("not implemented"); // TODO Implement lookup through chrome_local_state
+            ChromeProfile::ByName { name } => Ok(Some(format!("--profile-directory={}", name))),
+            ChromeProfile::ByHostedDomain { hosted_domain } => {
+                let local_state_path = get_chrome_local_state_path().ok_or(Error::new(
+                    ErrorKind::CantLocateChromeLocalState,
+                    format!("unable to retrieve path for Chrome's Local State"),
+                ))?;
+                let profiles = read_profiles_from_file(local_state_path)?;
+                let matching_profiles = profiles.get_profiles(hosted_domain);
+                if matching_profiles.is_empty() {
+                    Err(Box::new(Error::new(
+                        ErrorKind::InvalidHostedDomain,
+                        format!(
+                            "no profile in Chrome's Local State matched '{}' specified in config",
+                            hosted_domain
+                        ),
+                    )))
+                } else {
+                    Ok(Some(matching_profiles[0].clone()))
+                }
             }
-            ChromeProfile::None {} => None,
+            ChromeProfile::None {} => Ok(None),
         }
     }
 }
@@ -69,7 +111,7 @@ impl Into<String> for Pattern {
 impl TryFrom<String> for Pattern {
     type Error = regex::Error;
 
-    fn try_from(raw: String) -> Result<Self, Self::Error> {
+    fn try_from(raw: String) -> StdResult<Self, Self::Error> {
         let compiled = Regex::new(&raw)?;
         Ok(Pattern { compiled, raw })
     }
@@ -103,25 +145,28 @@ impl Configuration {
         }
     }
 
-    pub fn read_from_file<P: AsRef<Path>>(path: P) -> Result<Configuration, Box<dyn Error>> {
+    pub fn read_from_file<P: AsRef<Path>>(path: P) -> StdResult<Configuration, Box<dyn StdError>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         let configuration = serde_json::from_reader(reader)?;
         Ok(configuration)
     }
 
-    fn get_profile(&self, profile_name: &str) -> Result<&Browser, MissingProfileError> {
+    fn get_profile(&self, profile_name: &str) -> Result<&Browser> {
         for (profile, browser) in &self.profiles {
             if profile == profile_name {
                 return Ok(browser);
             }
         }
 
-        Err(MissingProfileError(profile_name.to_string()))
+        Err(Error::new(
+            ErrorKind::MissingProfile,
+            format!("could not find declaration of profile {}", &profile_name),
+        ))
     }
 
     /// Find the best matching browser profile for the given URL.
-    pub fn choose_browser(&self, url: &str) -> Result<Browser, MissingProfileError> {
+    pub fn choose_browser(&self, url: &str) -> Result<Browser> {
         for profile_selector in &self.profile_selection {
             if profile_selector.pattern.is_match(&url) {
                 return self

@@ -208,8 +208,7 @@ fn get_local_app_data_path() -> Option<PathBuf> {
 }
 
 /// Find the path to Chrome's "Local State" in the user's local app data folder
-#[allow(dead_code)]
-fn get_chrome_local_state_path() -> Option<PathBuf> {
+pub fn get_chrome_local_state_path() -> Option<PathBuf> {
     let app_data_relative = r"Google\Chrome\User Data\Local State";
     get_local_app_data_path().map(|base| base.join(app_data_relative))
 }
@@ -430,7 +429,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                 let (exe, args) = match browser {
                     Browser::Chrome(profile) => {
                         let mut args = Vec::new();
-                        if let Some(argument) = profile.get_argument() {
+                        if let Some(argument) = profile.get_argument()? {
                             args.push(argument);
                         }
                         args.push(url.to_string());

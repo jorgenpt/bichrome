@@ -25,7 +25,7 @@ fn get_application_support_path() -> Option<PathBuf> {
 }
 
 #[allow(dead_code)]
-fn get_chrome_local_state_path() -> Option<PathBuf> {
+pub fn get_chrome_local_state_path() -> Option<PathBuf> {
     get_application_support_path().map(|path| path.join("Google/Chrome/Local State"))
 }
 
@@ -71,7 +71,7 @@ fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
     let browser = config.choose_browser(&url)?;
     let (exe, args) = match browser {
         Browser::Chrome(profile) => {
-            if let Some(argument) = profile.get_argument() {
+            if let Some(argument) = profile.get_argument()? {
                 let args = vec![argument, url.to_string()];
                 (get_chrome_binary_path().to_str().unwrap().to_string(), args)
             } else {
