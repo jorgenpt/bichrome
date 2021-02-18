@@ -1,22 +1,24 @@
 #![allow(dead_code)]
 
+use webextension_pattern::Pattern;
+
 use crate::{chrome_local_state::read_profiles_from_file, os::get_chrome_local_state_path};
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::error::Error as StdError;
 use std::fmt;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use std::result::Result as StdResult;
+use url::Url;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ErrorKind {
     MissingProfile,
     CantLocateChromeLocalState,
     InvalidHostedDomain,
+    InvalidUrlPassedIn(url::ParseError),
 }
 
 #[derive(Debug)]
@@ -92,40 +94,6 @@ pub enum Browser {
     Safari,
 }
 
-#[serde(try_from = "String", into = "String")]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Pattern {
-    raw: String,
-    compiled: Regex,
-}
-
-impl Pattern {
-    pub fn is_match(&self, url: &str) -> bool {
-        self.compiled.is_match(url)
-    }
-}
-
-impl Into<String> for Pattern {
-    fn into(self) -> String {
-        self.raw
-    }
-}
-
-impl TryFrom<String> for Pattern {
-    type Error = regex::Error;
-
-    fn try_from(raw: String) -> StdResult<Self, Self::Error> {
-        let compiled = Regex::new(&raw)?;
-        Ok(Pattern { compiled, raw })
-    }
-}
-
-impl fmt::Display for Pattern {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:#?}", self.raw)
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProfilePattern {
     pub profile: String,
@@ -170,6 +138,13 @@ impl Configuration {
 
     /// Find the best matching browser profile for the given URL.
     pub fn choose_browser(&self, url: &str) -> Result<Browser> {
+        let url = Url::parse(url).map_err(|err| {
+            Error::new(
+                ErrorKind::InvalidUrlPassedIn(err),
+                format!("could not parse provided URL {}", url),
+            )
+        })?;
+
         for profile_selector in &self.profile_selection {
             if profile_selector.pattern.is_match(&url) {
                 return self
