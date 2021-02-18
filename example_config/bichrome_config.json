@@ -5,11 +5,18 @@
             "browser": "Safari"
         },
         "Personal": {
-            "browser": "Safari"
+            "browser": "Firefox"
         },
         "Work": {
             "browser": "Chrome",
-            "hosted_domain": "undeadlabs.com"
+            "hosted_domain": "mycorp.com"
+        },
+        "After Dark": {
+            "browser": "Chrome",
+            "profile": "Profile 1"
+        },
+        "Most Recent Chrome Window": {
+            "browser": "Chrome"
         }
     },
     "profile_selection": [
