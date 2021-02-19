@@ -50,8 +50,13 @@ type Result<T> = StdResult<T, Error>;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum ChromeProfile {
-    ByName { name: String },
-    ByHostedDomain { hosted_domain: String },
+    ByName {
+        #[serde(rename = "profile")]
+        name: String,
+    },
+    ByHostedDomain {
+        hosted_domain: String,
+    },
     None {},
 }
 
