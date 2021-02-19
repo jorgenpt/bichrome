@@ -1,5 +1,4 @@
-[![Travis CI Build status](https://www.travis-ci.com/jorgenpt/bichrome.svg?branch=main)](https://www.travis-ci.com/github/jorgenpt/bichrome)
-[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/epdwc70kl4sggl4v?svg=true)](https://ci.appveyor.com/project/jorgenpt/bichrome)
+[![Build status](https://github.com/jorgenpt/bichrome/workflows/Build/badge.svg)](https://github.com/jorgenpt/bichrome/actions?query=workflow%3ABuild)
 
 # <img src="assets/bichrome_icon.png?raw=true" width="24"> bichrome
 
