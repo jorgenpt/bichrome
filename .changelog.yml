@@ -4,14 +4,15 @@ conventions:
     - {tag: "break", title: "Breaking Changes"}
     - {tag: "feature", title: "Features"}
     - {tag: "fix", title: "Fixes"}
+    - {tag: "improve", title: "Improvements"}
     - {tag: "", title: "Notes"}
-    - {tag: "add", title: "Additions"}
-    - {tag: "remove", title: "Removals"}
-    - {tag: "deprecate", title: "Deprecations"}
   scopes:
     - {tag: "", title: ""}
-    - {tag: "doc", title: "Documentation"}
+    - {tag: "win", title: "Windows"}
+    - {tag: "mac", title: "macOS"}
     - {tag: "infra", title: "Infrastructure"}
+    - {tag: "internal", title: "Internal"}
+    - {tag: "doc", title: "Documentation"}
 output:
   post_processors:
     - {lookup: "GH-(?P<id>\\d+)", replace: "[GH-$id](https://github.com/jorgenpt/bichrome/issues/$id)"}
