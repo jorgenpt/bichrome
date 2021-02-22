@@ -2,50 +2,37 @@
 
 use webextension_pattern::Pattern;
 
-use crate::{chrome_local_state::read_profiles_from_file, os::get_chrome_local_state_path};
+use crate::{
+    chrome_local_state::{self, read_profiles_from_file},
+    os::get_chrome_local_state_path,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::error::Error as StdError;
-use std::fmt;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use std::result::Result as StdResult;
+use thiserror::Error;
 use url::Url;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum ErrorKind {
-    MissingProfile,
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("could not read configuration file")]
+    InvalidFile(#[source] std::io::Error),
+    #[error("could not parse configuration file")]
+    InvalidJson(#[source] serde_json::Error),
+    #[error("could not find declaration of profile {0}")]
+    MissingProfile(String),
+    #[error("unable to retrieve path for Chrome's Local State")]
     CantLocateChromeLocalState,
-    InvalidHostedDomain,
-    InvalidUrlPassedIn(url::ParseError),
+    #[error("unable to parse Chrome's Local State")]
+    CantParseChromeLocalState(#[source] chrome_local_state::Error),
+    #[error("no profile in Chrome's Local State matched '{0}' specified in config")]
+    InvalidHostedDomain(String),
+    #[error("failed to parse received url {0:?}")]
+    InvalidUrlPassedIn(String, #[source] url::ParseError),
 }
 
-#[derive(Debug)]
-pub struct Error {
-    /// Formated error message
-    pub message: String,
-    /// The type of error
-    pub kind: ErrorKind,
-}
-
-impl Error {
-    fn new(kind: ErrorKind, message: String) -> Self {
-        Error {
-            kind,
-            message: message,
-        }
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-impl StdError for Error {}
-
-type Result<T> = StdResult<T, Error>;
+type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
@@ -61,24 +48,17 @@ pub enum ChromeProfile {
 }
 
 impl ChromeProfile {
-    pub fn get_argument(&self) -> StdResult<Option<String>, Box<dyn StdError>> {
+    pub fn get_argument(&self) -> Result<Option<String>> {
         match self {
             ChromeProfile::ByName { name } => Ok(Some(format!("--profile-directory={}", name))),
             ChromeProfile::ByHostedDomain { hosted_domain } => {
-                let local_state_path = get_chrome_local_state_path().ok_or(Error::new(
-                    ErrorKind::CantLocateChromeLocalState,
-                    format!("unable to retrieve path for Chrome's Local State"),
-                ))?;
-                let profiles = read_profiles_from_file(local_state_path)?;
+                let local_state_path =
+                    get_chrome_local_state_path().ok_or(Error::CantLocateChromeLocalState)?;
+                let profiles = read_profiles_from_file(local_state_path)
+                    .map_err(Error::CantParseChromeLocalState)?;
                 let matching_profiles = profiles.get_profiles(hosted_domain);
                 if matching_profiles.is_empty() {
-                    Err(Box::new(Error::new(
-                        ErrorKind::InvalidHostedDomain,
-                        format!(
-                            "no profile in Chrome's Local State matched '{}' specified in config",
-                            hosted_domain
-                        ),
-                    )))
+                    Err(Error::InvalidHostedDomain(hosted_domain.to_owned()))
                 } else {
                     Ok(Some(format!(
                         "--profile-directory={}",
@@ -121,10 +101,10 @@ impl Configuration {
         }
     }
 
-    pub fn read_from_file<P: AsRef<Path>>(path: P) -> StdResult<Configuration, Box<dyn StdError>> {
-        let file = File::open(path)?;
+    pub fn read_from_file<P: AsRef<Path>>(path: P) -> Result<Configuration> {
+        let file = File::open(path).map_err(Error::InvalidFile)?;
         let reader = BufReader::new(file);
-        let configuration = serde_json::from_reader(reader)?;
+        let configuration = serde_json::from_reader(reader).map_err(Error::InvalidJson)?;
         Ok(configuration)
     }
 
@@ -135,20 +115,12 @@ impl Configuration {
             }
         }
 
-        Err(Error::new(
-            ErrorKind::MissingProfile,
-            format!("could not find declaration of profile {}", &profile_name),
-        ))
+        Err(Error::MissingProfile(profile_name.to_string()))
     }
 
     /// Find the best matching browser profile for the given URL.
     pub fn choose_browser(&self, url: &str) -> Result<Browser> {
-        let url = Url::parse(url).map_err(|err| {
-            Error::new(
-                ErrorKind::InvalidUrlPassedIn(err),
-                format!("could not parse provided URL {}", url),
-            )
-        })?;
+        let url = Url::parse(url).map_err(|err| Error::InvalidUrlPassedIn(url.to_string(), err))?;
 
         for profile_selector in &self.profile_selection {
             if profile_selector.pattern.is_match(&url) {

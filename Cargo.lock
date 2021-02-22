@@ -19,6 +19,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.38"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afddf7f520a80dbf76e6f50a35bca42a2331ef227a28b3b6dc5c2e2338d114b1"
+
+[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -57,6 +63,7 @@ checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 name = "bichrome"
 version = "0.2.0"
 dependencies = [
+ "anyhow",
  "const_format",
  "fruitbasket",
  "log",
@@ -64,6 +71,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "structopt",
+ "thiserror",
  "url",
  "webextension_pattern",
  "windows_bindings",
