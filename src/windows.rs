@@ -78,10 +78,24 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
         let (spad_capabilities_startmenu, _) = spad_capabilities.create_subkey("Startmenu")?;
         spad_capabilities_startmenu.set_value("StartMenuInternet", &SPAD_CANONICAL_NAME)?;
 
+        // Register for various URL protocols that our target browsers might support.
+        // (The list of protocols that Chrome registers for is actually quite large, including irc, mailto, mms,
+        // etc, but let's do the most obvious/significant ones.)
         let (spad_capabilities_urlassociations, _) =
             spad_capabilities.create_subkey("URLAssociations")?;
-        spad_capabilities_urlassociations.set_value("http", &CLASS_NAME)?;
-        spad_capabilities_urlassociations.set_value("https", &CLASS_NAME)?;
+        for protocol in &["bichrome", "ftp", "http", "https", "webcal"] {
+            spad_capabilities_urlassociations.set_value(protocol, &CLASS_NAME)?;
+        }
+
+        // Register for various file types, so that we'll be invoked for file:// URLs for these types (e.g.
+        // by `cargo doc --open`.)
+        let (spad_capabilities_fileassociations, _) =
+            spad_capabilities.create_subkey("FileAssociations")?;
+        for filetype in &[
+            ".htm", ".html", ".pdf", ".shtml", ".svg", ".webp", ".xht", ".xhtml",
+        ] {
+            spad_capabilities_fileassociations.set_value(filetype, &CLASS_NAME)?;
+        }
 
         let (spad_defaulticon, _) = spad.create_subkey("DefaultIcon")?;
         spad_defaulticon.set_value("", &icon_path)?;
