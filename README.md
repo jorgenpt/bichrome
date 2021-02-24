@@ -2,13 +2,35 @@
 
 # <img src="assets/bichrome_icon.png?raw=true" width="24"> bichrome
 
-bichrome is a simple utility for Windows that can be configured as your default browser, which will choose between multiple Chrome profiles to open a URL in based on the configuration you specify.
+bichrome is a simple utility for Windows and macOS that you configure as your default browser, which then will choose which browser to open a URL in based on the configuration you specify. It also supports picking a particular Chrome profile -- either by specifying a profile name, or by specifying the "hosted domain" of your profile if you're using Google Workspace. (Your hosted domain is the bit after the @ in a non-"gmail dot com" address hosted by GMail.)
 
-Running `bichrome.exe` without arguments will attempt to register bichrome as a browser at its current path. It's recommended that you put `bichrome.exe` somewhere permanent before this, as its config and log will live next to it. `%localappdata%\Programs\bichrome\bichrome.exe` is a good place to install it for your current user! bichrome does intentionally not support system-wide registration.
+It was created to address the problem of clicking links in Slack and other apps and then having to relocate them to the "correct" browser window / Chrome profile where you're logged in to Facebook / JIRA / etc.
 
 Big thanks to Krista A. Leemhuis for the amazing icon!
 
-## `bichrome_config.json`
+## Installation
+
+### Windows
+
+1. Download `bichrome-win64.exe` from [the latest release on the Releases page](https://github.com/jorgenpt/bichrome/releases).
+2. Move it to its permanent home -- e.g. creating a directory in `%localappdata%\Programs` called bichrome and putting it there.
+3. Run `bichrome-win64.exe` once by double clicking it. This will register bichrome as a potential browser.
+4. Configure bichrome as your default browser by opening "Default Apps" (You can open your start menu and just type "Default Apps") and clicking the icon under "Web browser", and picking bichrome.
+
+That's it! Now just create a configuration file named `bichrome_config.json` next to `bichrome-win64.exe` (see [the configuration section](#config) for details) -- a good starting place is to download & edit the [example config](https://raw.githubusercontent.com/jorgenpt/bichrome/main/example_config/bichrome_config.json).
+
+
+### macOS
+
+1. Download `bichrome-macos.zip` from [the latest release on the Releases page](https://github.com/jorgenpt/bichrome/releases).
+2. Extract it and copy the `bichrome` app e.g. to `/Applications`
+3. Open System Preferences and search for "Default Browser"
+4. Pick bichrome as youre default browser.
+
+That's it! Now just create a configuration file named `bichrome_config.json` in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` (see [the configuration section](#config) for details) -- a good starting place is to download & edit the [example config](https://raw.githubusercontent.com/jorgenpt/bichrome/main/example_config/bichrome_config.json).
+
+
+## <a name="config" href="#config">`bichrome_config.json`</a>
 
 Configuring bichrome involves setting up a set of `profiles` that define a name and a browser (and for Chrome, optionally a browser profile name or a profile's hosted domain), and setting up a list of profile selectors that pick a profile based on matching patterns against the URL you're opening.
 
@@ -53,7 +75,7 @@ The following snippet shows how selectors are configured. See [the example confi
 }
 ```
 
-`bichrome_config.json` is expected to live next to `bichrome.exe` on Windows, and in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` on macOS.
+`bichrome_config.json` is expected to live next to `bichrome-win64.exe` on Windows, and in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` on macOS.
 
 You can find an example config in [example_config/bichrome_config.json][example_config].
 
