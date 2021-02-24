@@ -76,7 +76,9 @@ impl ChromeProfile {
 pub enum Browser {
     Chrome(ChromeProfile),
     Firefox,
-    Safari,
+    #[serde(alias = "Safari")]
+    #[serde(alias = "Edge")]
+    OsDefault,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -92,7 +92,7 @@ fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
                 .collect();
             ("open".to_string(), args)
         }
-        Browser::Safari => {
+        Browser::OsDefault => {
             let args = ["-b", "com.apple.Safari", url]
                 .iter()
                 .map(|s| s.to_string())

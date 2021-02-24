@@ -430,12 +430,8 @@ pub fn main() -> Result<()> {
 
                         (get_exe_path("chrome.exe")?, args)
                     }
-                    Browser::Firefox => {
-                        panic!("not implemented")
-                    }
-                    Browser::Safari => {
-                        panic!("not implemented")
-                    }
+                    Browser::Firefox => (get_exe_path("firefox.exe")?, vec![url.to_string()]),
+                    Browser::OsDefault => (get_exe_path("msedge.exe")?, vec![url.to_string()]),
                 };
 
                 let commandline = format!("\"{}\" \"{}\"", exe.display(), args.join("\" \""));
