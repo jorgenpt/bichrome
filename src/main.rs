@@ -14,5 +14,5 @@ mod windows;
 use windows as os;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    os::main()
+    Ok(os::main()?)
 }

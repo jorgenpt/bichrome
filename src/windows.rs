@@ -4,6 +4,7 @@
 #![cfg_attr(debug_assertions, windows_subsystem = "console")]
 
 use crate::config::{Browser, Configuration};
+use anyhow::{bail, Context, Result};
 use com::ComStrPtr;
 use const_format::concatcp;
 use log::{debug, error, info, trace, warn};
@@ -12,7 +13,6 @@ use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use std::{error::Error, fmt};
 use structopt::StructOpt;
 use windows_bindings;
 use winreg::enums::*;
@@ -25,16 +25,32 @@ const CLASS_NAME: &str = "bichromeHTML";
 // and they're expected to use the name of the exe as the key.
 const SPAD_PATH: &str = concatcp!(r"SOFTWARE\Clients\StartMenuInternet\", SPAD_CANONICAL_NAME);
 const SPAD_INSTALLINFO_PATH: &str = concatcp!(SPAD_PATH, "InstallInfo");
-const APPREG_PATH: &str = concatcp!(
-    r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\",
-    SPAD_CANONICAL_NAME
-);
+
+const APPREG_BASE: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\";
+const APPREG_PATH: &str = concatcp!(APPREG_BASE, SPAD_CANONICAL_NAME);
 const CLSID_PATH: &str = concatcp!(r"SOFTWARE\Classes\", CLASS_NAME);
 const REGISTERED_APPLICATIONS_PATH: &str =
     concatcp!(r"SOFTWARE\RegisteredApplications\", DISPLAY_NAME);
 
 const DISPLAY_NAME: &str = "bichrome";
 const DESCRIPTION: &str = "Pick the right Chrome profile for each URL";
+
+/// Retrieve an EXE path by looking in the registry for the App Paths entry
+fn get_exe_path(exe_name: &str) -> Result<PathBuf> {
+    for root_name in &[HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
+        let root = RegKey::predef(*root_name);
+        if let Ok(subkey) = root.open_subkey(format!("{}{}", APPREG_BASE, exe_name)) {
+            if let Ok(value) = subkey.get_value::<String, _>("") {
+                let path = PathBuf::from(value);
+                if path.is_file() {
+                    return Ok(path);
+                }
+            }
+        }
+    }
+
+    bail!("Could not find path for {}", exe_name);
+}
 
 /// Register associations with Windows for being a browser
 fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
@@ -179,26 +195,6 @@ fn hide_icons() -> io::Result<()> {
     }
 }
 
-/// Look up the path to Chrome in the Windows registry
-fn get_chrome_exe_path() -> Option<PathBuf> {
-    const CHROME_APPREG_PATH: &str =
-        r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe";
-
-    for root_name in &[HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
-        let root_key = RegKey::predef(*root_name);
-        if let Ok(subkey) = root_key.open_subkey(CHROME_APPREG_PATH) {
-            if let Ok(value) = subkey.get_value::<String, _>("") {
-                let path = PathBuf::from(value);
-                if path.exists() {
-                    return Some(path);
-                }
-            }
-        }
-    }
-
-    None
-}
-
 fn get_local_app_data_path() -> Option<PathBuf> {
     use windows_bindings::windows::win32::shell::*;
 
@@ -313,18 +309,7 @@ fn get_exe_relative_path(filename: &str) -> io::Result<PathBuf> {
     Ok(path)
 }
 
-#[derive(Debug, Clone)]
-struct ChromeNotFoundError;
-
-impl fmt::Display for ChromeNotFoundError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "unable to retrieve path to chrome.exe")
-    }
-}
-
-impl Error for ChromeNotFoundError {}
-
-fn init() -> Result<CommandOptions, Box<dyn Error>> {
+fn init() -> Result<CommandOptions> {
     // First parse our command line options, so we can use it to configure the logging.
     let options = CommandOptions::from_args();
     let log_level = if options.debug {
@@ -372,7 +357,7 @@ fn read_config() -> io::Result<Configuration> {
     })
 }
 
-pub fn main() -> Result<(), Box<dyn Error>> {
+pub fn main() -> Result<()> {
     let options = init()?;
 
     let mode = options.mode.unwrap_or(if options.urls.is_empty() {
@@ -382,10 +367,10 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     });
 
     if !matches!(mode, ExecutionMode::Open) && !options.urls.is_empty() {
-        return Err(Box::new(structopt::clap::Error::with_description(
-            &format!("specified a list of urls with mode {:?}", mode),
-            structopt::clap::ErrorKind::WrongNumberOfValues,
-        )));
+        bail!(
+            "Specified a list of URLs for mode {:?} which doesn't take URLs",
+            mode
+        );
     }
 
     match mode {
@@ -402,9 +387,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                     None
                 };
 
-                if let Err(e) = register_urlhandler(extra_args) {
-                    error!("failed to register URL handler: {:?}", e);
-                }
+                register_urlhandler(extra_args).context("Failed to register URL handler")?;
             }
         }
         ExecutionMode::Unregister => {
@@ -420,9 +403,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                 info!("(dry-run) would mark icons as visible")
             } else {
                 info!("marking icons as visible");
-                if let Err(e) = show_icons() {
-                    error!("failed to show icons: {:?}", e);
-                }
+                show_icons().context("Failed to show icons")?;
             }
         }
         ExecutionMode::HideIcons => {
@@ -430,9 +411,8 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                 info!("(dry-run) would mark icons as hidden")
             } else {
                 info!("marking icons as hidden");
-                if let Err(e) = hide_icons() {
-                    error!("failed to hide icons: {:?}", e);
-                }
+
+                hide_icons().context("Failed to hide icons")?;
             }
         }
         ExecutionMode::Open => {
@@ -440,7 +420,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
             for url in options.urls {
                 let browser = config.choose_browser(&url)?;
-                let (exe, args) = match browser {
+                let (exe, args) = match &browser {
                     Browser::Chrome(profile) => {
                         let mut args = Vec::new();
                         if let Some(argument) = profile.get_argument()? {
@@ -448,7 +428,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                         }
                         args.push(url.to_string());
 
-                        (get_chrome_exe_path().ok_or(ChromeNotFoundError)?, args)
+                        (get_exe_path("chrome.exe")?, args)
                     }
                     Browser::Firefox => {
                         panic!("not implemented")
@@ -458,16 +438,26 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                     }
                 };
 
+                let commandline = format!("\"{}\" \"{}\"", exe.display(), args.join("\" \""));
                 if options.dry_run {
-                    info!("(dry-run) \"{}\" \"{}\"", exe.display(), args.join("\" \""));
+                    info!("(dry-run) {}", commandline);
                 } else {
-                    debug!("launching \"{}\" \"{}\"", exe.display(), args.join("\" \""));
+                    // Let's not log the URL to the logs by default, so there's not a gross log file
+                    // the user might not be aware of inadvertently 'tracking' their browsing activity.
+                    info!("picked {:?}", &browser);
+                    debug!("launching {}", commandline);
                     Command::new(&exe)
                         .stdout(Stdio::null())
                         .stdin(Stdio::null())
                         .stderr(Stdio::null())
                         .args(args)
-                        .spawn()?;
+                        .spawn()
+                        .with_context(|| {
+                            format!(
+                                "Failed to launch browser {:?} for URL {}, attempted command {}",
+                                &browser, url, commandline
+                            )
+                        })?;
                 }
             }
         }
