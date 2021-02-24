@@ -5,7 +5,7 @@ authors = ["Jørgen P. Tjernø <jorgenpt@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-windows = "0.3.1"
+windows = "^0.3"
 
 [build-dependencies]
-windows = "0.3.1"
+windows = "^0.3"
