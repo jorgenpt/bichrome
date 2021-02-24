@@ -9,14 +9,18 @@ use com::ComStrPtr;
 use const_format::concatcp;
 use log::{debug, error, info, trace, warn};
 use simplelog::*;
-use std::fs::File;
-use std::io;
-use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::{
+    fs::{File, OpenOptions},
+    io,
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+};
 use structopt::StructOpt;
 use windows_bindings;
-use winreg::enums::*;
-use winreg::RegKey;
+use winreg::{enums::*, RegKey};
+
+// How many bytes do we let the log size grow to before we rotate it? We only keep one current and one old log.
+const MAX_LOG_SIZE: u64 = 64 * 1024;
 
 const SPAD_CANONICAL_NAME: &str = "bichrome.exe";
 const CLASS_NAME: &str = "bichromeHTML";
@@ -309,6 +313,20 @@ fn get_exe_relative_path(filename: &str) -> io::Result<PathBuf> {
     Ok(path)
 }
 
+fn rotate_and_open_log(log_path: &Path) -> Result<File, io::Error> {
+    if let Ok(log_info) = std::fs::metadata(&log_path) {
+        if log_info.len() > MAX_LOG_SIZE {
+            if let Err(_) = std::fs::rename(&log_path, log_path.with_extension("log.old")) {
+                if let Err(_) = std::fs::remove_file(log_path) {
+                    return File::create(log_path);
+                }
+            }
+        }
+    }
+
+    return OpenOptions::new().append(true).open(log_path);
+}
+
 fn init() -> Result<CommandOptions> {
     // First parse our command line options, so we can use it to configure the logging.
     let options = CommandOptions::from_args();
@@ -322,10 +340,12 @@ fn init() -> Result<CommandOptions> {
 
     let log_path = get_exe_relative_path("bichrome.log")?;
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
-    // If we can write to bichrome.log, always use it.
-    if let Ok(file) = File::create(log_path) {
-        loggers.push(WriteLogger::new(log_level, Config::default(), file));
-    }
+    // Always log to bichrome.log
+    loggers.push(WriteLogger::new(
+        log_level,
+        Config::default(),
+        rotate_and_open_log(&log_path)?,
+    ));
     // We only use the terminal logger in the debug build, since we don't allocate a console window otherwise.
     if cfg!(debug_assertions) {
         if let Some(logger) = TermLogger::new(log_level, Config::default(), TerminalMode::Mixed) {
