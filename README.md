@@ -10,9 +10,54 @@ Big thanks to Krista A. Leemhuis for the amazing icon!
 
 ## `bichrome_config.json`
 
-All of the configuration for bichrome comes from setting up a set of profile matching patterns. This is done under the `profile_selection` key, and the first profile selector that matches will be used to open the URL. If none of the patterns match, the URL will be opened without specifying the profile. (Chrome's behavior in this case is to open it in the last activated window.) `bichrome_config.json` is expected to live next to `bichrome.exe` on Windows, and in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` on macOS.
+Configuring bichrome involves setting up a set of `profiles` that define a name and a browser (and for Chrome, optionally a browser profile name or a profile's hosted domain), and setting up a list of profile selectors that pick a profile based on matching patterns against the URL you're opening.
 
-You can find an example config in [example_config/bichrome_config.json](example_config/bichrome_config.json).
+The following snippet shows how profiles are configured. See [the example config][example_config] for a more complete example.
+
+```json
+{
+  "default_profile": "Personal",
+  "profiles": {
+    "Work": {
+      "browser": "Chrome",
+      "hosted_domain": "mycorp.com"
+    },
+    "Personal": {
+      "browser": "Firefox"
+    }
+  },
+  "profile_selection": [ ... ]
+}
+```
+
+The format for the patterns are documented in detail on [Mozilla.org](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns) or in [the documentation of the webextension_pattern crate](https://docs.rs/webextension_pattern/latest/webextension_pattern/index.html) which is used to perform the matching. Some examples can be found in the [the example config][example_config].
+
+Configuring the matching is done under the `profile_selection` key. The browser from the first selector that matches the URL will be used to open the URL. If none of the patterns match, the URL will be opened with the profile named in `default_profile`, and if that doesn't exist, it will default to using Chrome with no profile specified. (Chrome's behavior in this case is to open it in the last activated window.) A profile specifying a browser of `Safari`, `Edge`, or `OsDefault` will use Safari on macOS and Edge on Windows.
+
+The following snippet shows how selectors are configured. See [the example config][example_config] for a more complete example.
+
+```json
+{
+  "default_profile": "...",
+  "profiles": { ... },
+  "profile_selection": [
+    {
+        "profile": "Personal",
+        "pattern": "*.twitter.com"
+    },
+    {
+        "profile": "Work",
+        "pattern": "*.mycorp.net"
+    }
+  ]
+}
+```
+
+`bichrome_config.json` is expected to live next to `bichrome.exe` on Windows, and in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` on macOS.
+
+You can find an example config in [example_config/bichrome_config.json][example_config].
+
+[example_config]: example_config/bichrome_config.json
 
 ## License
 

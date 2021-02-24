@@ -2,7 +2,7 @@
     "default_profile": "Fallback",
     "profiles": {
         "Fallback": {
-            "browser": "Safari"
+            "browser": "OsDefault"
         },
         "Personal": {
             "browser": "Firefox"
