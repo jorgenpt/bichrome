@@ -324,7 +324,7 @@ fn rotate_and_open_log(log_path: &Path) -> Result<File, io::Error> {
         }
     }
 
-    return OpenOptions::new().append(true).open(log_path);
+    return OpenOptions::new().append(true).create(true).open(log_path);
 }
 
 fn init() -> Result<CommandOptions> {
