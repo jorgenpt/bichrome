@@ -12,7 +12,7 @@ Big thanks to Krista A. Leemhuis for the amazing icon!
 
 ### Windows
 
-1. Download `bichrome-win64.exe` from [the latest release on the Releases page](https://github.com/jorgenpt/bichrome/releases).
+1. Download `bichrome-win64.exe` from [the latest release](https://github.com/jorgenpt/bichrome/releases/latest).
 2. Move it to its permanent home -- e.g. creating a directory in `%localappdata%\Programs` called bichrome and putting it there.
 3. Run `bichrome-win64.exe` once by double clicking it. This will register bichrome as a potential browser.
 4. Configure bichrome as your default browser by opening "Default Apps" (You can open your start menu and just type "Default Apps") and clicking the icon under "Web browser", and picking bichrome.
@@ -22,7 +22,7 @@ That's it! Now just create a configuration file named `bichrome_config.json` nex
 
 ### macOS
 
-1. Download `bichrome-macos.zip` from [the latest release on the Releases page](https://github.com/jorgenpt/bichrome/releases).
+1. Download `bichrome-macos.zip` from [the latest release](https://github.com/jorgenpt/bichrome/releases/latest).
 2. Extract it and copy the `bichrome` app e.g. to `/Applications`
 3. Open System Preferences and search for "Default Browser"
 4. Pick bichrome as youre default browser.
