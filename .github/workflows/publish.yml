@@ -80,6 +80,7 @@ jobs:
       - name: Generate changelog
         run: |
           cargo install --version 0.3.1 git-changelog
+          set -x
           PREVIOUS_TAG=$(git for-each-ref --count=1 --sort=-taggerdate '--format=%(refname:short)' 'refs/tags/*' '--no-contains=${{ github.ref }}')
           git changelog -d ${PREVIOUS_TAG}..${{ github.ref }} >dist/CHANGELOG.md
       - name: Create Release
