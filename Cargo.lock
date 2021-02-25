@@ -408,9 +408,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.6.0"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ad167a2f54e832b82dbe003a046280dceffe5227b5f79e08e363a29638cfddd"
+checksum = "10acf907b94fc1b1a152d08ef97e7759650268cf986bf127f387e602b02c7e5a"
 
 [[package]]
 name = "percent-encoding"
@@ -771,9 +771,9 @@ checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "webextension_pattern"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebba57581a5a14b23fbbd607fc798db821f8e59831d8d34da5a5904bb593c01d"
+checksum = "48a667877f0f82e205c49c21b8b09d8c88786db1c61bdb447676708ab2d98842"
 dependencies = [
  "regex",
  "regex-syntax",

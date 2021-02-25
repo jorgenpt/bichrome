@@ -15,7 +15,7 @@ simplelog = "^0.7.6"
 structopt = "0.3"
 thiserror = "^1"
 url = "^2.2.0"
-webextension_pattern = { version ="0.2", features = ["serde"] }
+webextension_pattern = { version ="0.3", features = ["serde"] }
 
 [target.'cfg(windows)'.dependencies]
 windows_bindings = { path = "windows_bindings" }
