@@ -10,6 +10,7 @@ use std::{
     path::PathBuf,
     process::{Command, Stdio},
 };
+use url::Url;
 
 fn get_chrome_binary_path() -> PathBuf {
     // TODO Could be -- hopefully this would find it in Applications too?
@@ -129,7 +130,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     let stopper = app.stopper();
     app.register_callback(
-        FruitCallbackKey::Method("applicationWillFinishLaunching:"),
+        FruitCallbackKey::Method("applicationDidFinishLaunching:"),
         Box::new(move |_event| {
             stopper.stop();
         }),
@@ -144,6 +145,19 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             let url: String = fruitbasket::parse_url_event(event);
             if let Err(error) = handle_url(&url) {
                 panic!("error handling url: {}", error);
+            }
+            stopper.stop();
+        }),
+    );
+
+    let stopper = app.stopper();
+    app.register_callback(
+        FruitCallbackKey::Method("application:openFile:"),
+        Box::new(move |file| {
+            let file = fruitbasket::nsstring_to_string(file);
+            let url = Url::from_file_path(file).expect("Unable to convert file path to URL");
+            if let Err(error) = handle_url(&url.to_string()) {
+                panic!("error handling file path: {}", error);
             }
             stopper.stop();
         }),
