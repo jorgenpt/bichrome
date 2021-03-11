@@ -159,11 +159,14 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
 }
 
 fn refresh_shell() {
+    use windows_bindings::windows::win32::shell::SHCNE_ID;
+    use windows_bindings::windows::win32::shell::SHCNF_FLAGS;
+
     // Notify the shell about the updated URL associations. (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#becoming-the-default-browser)
     unsafe {
         windows_bindings::windows::win32::shell::SHChangeNotify(
-            windows_bindings::missing::SHCNE_ASSOCCHANGED,
-            windows_bindings::missing::SHCNF_DWORD | windows_bindings::missing::SHCNF_FLUSH,
+            SHCNE_ID::SHCNE_ASSOCCHANGED,
+            SHCNF_FLAGS::SHCNF_DWORD | SHCNF_FLAGS::SHCNF_FLUSH,
             std::ptr::null_mut(),
             std::ptr::null_mut(),
         );
@@ -201,16 +204,18 @@ fn hide_icons() -> io::Result<()> {
 
 fn get_local_app_data_path() -> Option<PathBuf> {
     use windows_bindings::windows::win32::shell::*;
+    use windows_bindings::windows::win32::system_services::PWSTR;
 
     let path_str = unsafe {
-        let mut path_ptr = ComStrPtr::null();
+        let mut path_pwstr = PWSTR::default();
         let hr = SHGetKnownFolderPath(
             &windows_bindings::missing::FOLDERID_LocalAppData,
             0,
             windows_bindings::windows::win32::system_services::HANDLE::default(),
-            path_ptr.mut_ptr(),
+            &mut path_pwstr,
         );
 
+        let path_ptr = ComStrPtr::take(path_pwstr.0);
         if hr.is_ok() {
             Some(path_ptr.to_string())
         } else {
@@ -232,12 +237,8 @@ mod com {
     pub struct ComStrPtr(*mut u16);
 
     impl ComStrPtr {
-        pub fn null() -> ComStrPtr {
-            ComStrPtr(std::ptr::null_mut())
-        }
-
-        pub fn mut_ptr(&mut self) -> *mut *mut u16 {
-            &mut self.0
+        pub fn take(ptr: *mut u16) -> ComStrPtr {
+            ComStrPtr(ptr)
         }
 
         pub fn ptr(&self) -> *const u16 {
