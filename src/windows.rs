@@ -5,7 +5,6 @@
 
 use crate::config::{Browser, Configuration};
 use anyhow::{bail, Context, Result};
-use com::ComStrPtr;
 use const_format::concatcp;
 use log::{debug, error, info, trace, warn};
 use simplelog::*;
@@ -203,69 +202,20 @@ fn hide_icons() -> io::Result<()> {
 }
 
 fn get_local_app_data_path() -> Option<PathBuf> {
-    use windows_bindings::windows::win32::shell::*;
-    use windows_bindings::windows::win32::system_services::PWSTR;
-
-    let path_str = unsafe {
-        let mut path_pwstr = PWSTR::default();
-        let hr = SHGetKnownFolderPath(
-            &windows_bindings::missing::FOLDERID_LocalAppData,
-            0,
-            windows_bindings::windows::win32::system_services::HANDLE::default(),
-            &mut path_pwstr,
-        );
-
-        let path_ptr = ComStrPtr::take(path_pwstr.0);
-        if hr.is_ok() {
-            Some(path_ptr.to_string())
-        } else {
-            None
+    use windows_bindings::windows::storage::UserDataPaths;
+    if let Ok(user_data_paths) = UserDataPaths::get_default() {
+        if let Ok(local_app_data_path) = user_data_paths.local_app_data() {
+            return Some(PathBuf::from(local_app_data_path.to_string()));
         }
-    };
+    }
 
-    path_str.map(PathBuf::from)
+    None
 }
 
 /// Find the path to Chrome's "Local State" in the user's local app data folder
 pub fn get_chrome_local_state_path() -> Option<PathBuf> {
     let app_data_relative = r"Google\Chrome\User Data\Local State";
     get_local_app_data_path().map(|base| base.join(app_data_relative))
-}
-
-mod com {
-    /// A small wrapper around a PWSTR whose memory is owned by COM.
-    pub struct ComStrPtr(*mut u16);
-
-    impl ComStrPtr {
-        pub fn take(ptr: *mut u16) -> ComStrPtr {
-            ComStrPtr(ptr)
-        }
-
-        pub fn ptr(&self) -> *const u16 {
-            self.0
-        }
-    }
-
-    impl ToString for ComStrPtr {
-        fn to_string(&self) -> String {
-            use std::slice;
-            unsafe {
-                let len = (0_isize..)
-                    .find(|&n| *self.0.offset(n) == 0)
-                    .expect("Couldn't find null terminator");
-                let array: &[u16] = slice::from_raw_parts(self.ptr(), len as usize);
-                String::from_utf16_lossy(array)
-            }
-        }
-    }
-
-    impl Drop for ComStrPtr {
-        fn drop(&mut self) {
-            use std::ffi::c_void;
-            use windows_bindings::windows::win32::com::CoTaskMemFree;
-            unsafe { CoTaskMemFree(self.ptr() as *mut c_void) };
-        }
-    }
 }
 
 // This is the definition of our command line options
