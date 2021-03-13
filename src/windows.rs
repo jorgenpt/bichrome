@@ -294,9 +294,11 @@ fn init() -> Result<CommandOptions> {
     ));
     // We only use the terminal logger in the debug build, since we don't allocate a console window otherwise.
     if cfg!(debug_assertions) {
-        if let Some(logger) = TermLogger::new(log_level, Config::default(), TerminalMode::Mixed) {
-            loggers.push(logger)
-        }
+        loggers.push(TermLogger::new(
+            log_level,
+            Config::default(),
+            TerminalMode::Mixed,
+        ));
     };
 
     CombinedLogger::init(loggers)?;

@@ -121,9 +121,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     if let Ok(file) = File::create(log_path) {
         loggers.push(WriteLogger::new(log_level, Config::default(), file));
     }
-    if let Some(logger) = TermLogger::new(log_level, Config::default(), TerminalMode::Mixed) {
-        loggers.push(logger)
-    }
+    loggers.push(TermLogger::new(
+        log_level,
+        Config::default(),
+        TerminalMode::Mixed,
+    ));
     CombinedLogger::init(loggers)?;
 
     let mut app = FruitApp::new();
