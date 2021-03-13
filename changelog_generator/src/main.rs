@@ -27,15 +27,17 @@ fn main() -> Result<()> {
 
     let range = format!("{}..{}", previous_version, this_version);
     let (commits_link, repo_url) = if let Some(repo_url) = repo_url {
+        let repo_url = repo_url.trim_end_matches('/');
+
         (
             format!(
                 "{}/compare/{}...{}",
                 repo_url, previous_version, this_version
             ),
-            repo_url,
+            repo_url.to_string(),
         )
     } else {
-        (String::from("#"), String::from("./"))
+        (String::from("#"), String::from("."))
     };
 
     let config = Configuration::from_yaml(include_str!("../../.changelog.yml"))?;
