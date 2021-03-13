@@ -1,8 +1,3 @@
-// We use the console subsystem in debug builds, but use the Windows subsystem in release
-// builds so we don't have to allocate a console and pop up a command line window.
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![cfg_attr(debug_assertions, windows_subsystem = "console")]
-
 use crate::config::{Browser, Configuration};
 use anyhow::{bail, Context, Result};
 use const_format::concatcp;
