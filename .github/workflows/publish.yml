@@ -70,6 +70,8 @@ jobs:
     
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # We need fetch depth 0 to get all the tags for determining the previous tag in the changelog generation.
       - uses: actions/cache@v2
         with:
           path: |
