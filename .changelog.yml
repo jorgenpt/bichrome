@@ -1,18 +1,14 @@
 # Configuration for git-changelog (https://github.com/aldrin/git-changelog)
 conventions:
   categories:
-    - {tag: "break", title: "Breaking Changes"}
-    - {tag: "feature", title: "Features"}
-    - {tag: "fix", title: "Fixes"}
-    - {tag: "improve", title: "Improvements"}
-    - {tag: "", title: "Notes"}
+    - {tag: "break", title: "Breaking Change"}
+    - {tag: "feature", title: "Feature"}
+    - {tag: "improve", title: "Improvement"}
+    - {tag: "fix", title: "Fix"}
   scopes:
-    - {tag: "", title: ""}
+    - {tag: "", title: "General"}
     - {tag: "win", title: "Windows"}
     - {tag: "mac", title: "macOS"}
-    - {tag: "infra", title: "Infrastructure"}
-    - {tag: "internal", title: "Internal"}
-    - {tag: "doc", title: "Documentation"}
 output:
   post_processors:
     - {lookup: "GH-(?P<id>\\d+)", replace: "[GH-$id](https://github.com/jorgenpt/bichrome/issues/$id)"}

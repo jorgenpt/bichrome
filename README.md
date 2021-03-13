@@ -30,7 +30,7 @@ That's it! Now just create a configuration file named `bichrome_config.json` nex
 That's it! Now just create a configuration file named `bichrome_config.json` in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` (see [the configuration section](#config) for details) -- a good starting place is to download & edit the [example config](https://raw.githubusercontent.com/jorgenpt/bichrome/main/example_config/bichrome_config.json).
 
 
-## <a name="config" href="#config">`bichrome_config.json`</a>
+## `bichrome_config.json`
 
 Configuring bichrome involves setting up a set of `profiles` that define a name and a browser (and for Chrome, optionally a browser profile name or a profile's hosted domain), and setting up a list of profile selectors that pick a profile based on matching patterns against the URL you're opening.
 

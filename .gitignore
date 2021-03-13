@@ -14,3 +14,6 @@
 
 # Local History for Visual Studio Code
 .history/
+
+# Release body for GH releases
+gh-release.md
