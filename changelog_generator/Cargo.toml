@@ -1,0 +1,16 @@
+[package]
+name = "changelog_generator"
+version = "0.1.0"
+authors = ["Jørgen P. Tjernø <jorgenpt@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "^1"
+tinytemplate = "1.2"
+serde        = "1.0"
+serde_derive = "1.0"
+
+[dependencies.git-changelog]
+default-features = false
+git = "https://github.com/jorgenpt/git-changelog"
+branch = "bichrome-version"
