@@ -27,8 +27,11 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           target
+          changelog_generator/target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-
-    - name: Build
+    - name: Build (bichrome)
       run: cargo build --verbose
+    - name: Build (changelog_generator)
+      run: cargo build --verbose --manifest-path changelog_generator/Cargo.toml
