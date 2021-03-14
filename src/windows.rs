@@ -16,17 +16,16 @@ use winreg::{enums::*, RegKey};
 // How many bytes do we let the log size grow to before we rotate it? We only keep one current and one old log.
 const MAX_LOG_SIZE: u64 = 64 * 1024;
 
-const SPAD_CANONICAL_NAME: &str = "bichrome.exe";
-const CLASS_NAME: &str = "bichromeHTML";
+const CANONICAL_NAME: &str = "bichrome.exe";
+const PROGID: &str = "bichromeHTML";
 
-// Configuration for "Set Program Access and Computer Defaults" aka SPAD. StartMenuInternet is the key for browsers
+// Configuration for "Default Programs". StartMenuInternet is the key for browsers
 // and they're expected to use the name of the exe as the key.
-const SPAD_PATH: &str = concatcp!(r"SOFTWARE\Clients\StartMenuInternet\", SPAD_CANONICAL_NAME);
-const SPAD_INSTALLINFO_PATH: &str = concatcp!(SPAD_PATH, "InstallInfo");
+const DPROG_PATH: &str = concatcp!(r"SOFTWARE\Clients\StartMenuInternet\", CANONICAL_NAME);
+const DPROG_INSTALLINFO_PATH: &str = concatcp!(DPROG_PATH, "InstallInfo");
 
 const APPREG_BASE: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\";
-const APPREG_PATH: &str = concatcp!(APPREG_BASE, SPAD_CANONICAL_NAME);
-const CLSID_PATH: &str = concatcp!(r"SOFTWARE\Classes\", CLASS_NAME);
+const PROGID_PATH: &str = concatcp!(r"SOFTWARE\Classes\", PROGID);
 const REGISTERED_APPLICATIONS_PATH: &str =
     concatcp!(r"SOFTWARE\RegisteredApplications\", DISPLAY_NAME);
 
@@ -56,7 +55,15 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
     // The expectations for the latter are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-reinstall-command
     use std::env::current_exe;
 
-    let exe_path = current_exe()?.to_str().unwrap_or_default().to_owned();
+    let exe_path = current_exe()?;
+    let exe_name = exe_path
+        .file_name()
+        .map(|s| s.to_str())
+        .flatten()
+        .unwrap_or_default()
+        .to_owned();
+
+    let exe_path = exe_path.to_str().unwrap_or_default().to_owned();
     let icon_path = format!("\"{}\",0", exe_path);
     let open_command = if let Some(extra_args) = extra_args {
         format!("\"{}\" {} \"%1\"", exe_path, extra_args)
@@ -66,85 +73,87 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
-    // Configure our CLSID to point to the right command
+    // Configure our ProgID to point to the right command
     {
-        let (clsid, _) = hkcu.create_subkey(CLSID_PATH)?;
-        clsid.set_value("", &DISPLAY_NAME)?;
+        let (progid_class, _) = hkcu.create_subkey(PROGID_PATH)?;
+        progid_class.set_value("", &DISPLAY_NAME)?;
 
-        let (clsid_defaulticon, _) = clsid.create_subkey("DefaultIcon")?;
-        clsid_defaulticon.set_value("", &icon_path)?;
+        let (progid_class_defaulticon, _) = progid_class.create_subkey("DefaultIcon")?;
+        progid_class_defaulticon.set_value("", &icon_path)?;
 
-        let (clsid_shell_open_command, _) = clsid.create_subkey(r"shell\open\command")?;
-        clsid_shell_open_command.set_value("", &open_command)?;
+        let (progid_class_shell_open_command, _) =
+            progid_class.create_subkey(r"shell\open\command")?;
+        progid_class_shell_open_command.set_value("", &open_command)?;
     }
 
-    // Set up the SPAD configuration for the app (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs)
+    // Set up the Default Programs configuration for the app (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs)
     {
-        let (spad, _) = hkcu.create_subkey(SPAD_PATH)?;
-        spad.set_value("", &DISPLAY_NAME)?;
-        spad.set_value("LocalizedString", &DISPLAY_NAME)?;
+        let (dprog, _) = hkcu.create_subkey(DPROG_PATH)?;
+        dprog.set_value("", &DISPLAY_NAME)?;
+        dprog.set_value("LocalizedString", &DISPLAY_NAME)?;
 
-        let (spad_capabilities, _) = spad.create_subkey("Capabilities")?;
-        spad_capabilities.set_value("ApplicationName", &DISPLAY_NAME)?;
-        spad_capabilities.set_value("ApplicationIcon", &icon_path)?;
-        spad_capabilities.set_value("ApplicationDescription", &DESCRIPTION)?;
+        let (dprog_capabilites, _) = dprog.create_subkey("Capabilities")?;
+        dprog_capabilites.set_value("ApplicationName", &DISPLAY_NAME)?;
+        dprog_capabilites.set_value("ApplicationIcon", &icon_path)?;
+        dprog_capabilites.set_value("ApplicationDescription", &DESCRIPTION)?;
 
-        let (spad_capabilities_startmenu, _) = spad_capabilities.create_subkey("Startmenu")?;
-        spad_capabilities_startmenu.set_value("StartMenuInternet", &SPAD_CANONICAL_NAME)?;
+        let (dprog_capabilities_startmenu, _) = dprog_capabilites.create_subkey("Startmenu")?;
+        dprog_capabilities_startmenu.set_value("StartMenuInternet", &CANONICAL_NAME)?;
 
         // Register for various URL protocols that our target browsers might support.
         // (The list of protocols that Chrome registers for is actually quite large, including irc, mailto, mms,
         // etc, but let's do the most obvious/significant ones.)
-        let (spad_capabilities_urlassociations, _) =
-            spad_capabilities.create_subkey("URLAssociations")?;
+        let (dprog_capabilities_urlassociations, _) =
+            dprog_capabilites.create_subkey("URLAssociations")?;
         for protocol in &["bichrome", "ftp", "http", "https", "webcal"] {
-            spad_capabilities_urlassociations.set_value(protocol, &CLASS_NAME)?;
+            dprog_capabilities_urlassociations.set_value(protocol, &PROGID)?;
         }
 
         // Register for various file types, so that we'll be invoked for file:// URLs for these types (e.g.
         // by `cargo doc --open`.)
-        let (spad_capabilities_fileassociations, _) =
-            spad_capabilities.create_subkey("FileAssociations")?;
+        let (dprog_capabilities_fileassociations, _) =
+            dprog_capabilites.create_subkey("FileAssociations")?;
         for filetype in &[
             ".htm", ".html", ".pdf", ".shtml", ".svg", ".webp", ".xht", ".xhtml",
         ] {
-            spad_capabilities_fileassociations.set_value(filetype, &CLASS_NAME)?;
+            dprog_capabilities_fileassociations.set_value(filetype, &PROGID)?;
         }
 
-        let (spad_defaulticon, _) = spad.create_subkey("DefaultIcon")?;
-        spad_defaulticon.set_value("", &icon_path)?;
+        let (dprog_defaulticon, _) = dprog.create_subkey("DefaultIcon")?;
+        dprog_defaulticon.set_value("", &icon_path)?;
 
         // Set up reinstallation and show/hide icon commands (https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#registering-installation-information)
-        let (spad_installinfo, _) = spad.create_subkey("InstallInfo")?;
-        spad_installinfo.set_value("ReinstallCommand", &format!("\"{}\" register", exe_path))?;
-        spad_installinfo.set_value("HideIconsCommand", &format!("\"{}\" hide-icons", exe_path))?;
-        spad_installinfo.set_value("ShowIconsCommand", &format!("\"{}\" show-icons", exe_path))?;
+        let (dprog_installinfo, _) = dprog.create_subkey("InstallInfo")?;
+        dprog_installinfo.set_value("ReinstallCommand", &format!("\"{}\" register", exe_path))?;
+        dprog_installinfo.set_value("HideIconsCommand", &format!("\"{}\" hide-icons", exe_path))?;
+        dprog_installinfo.set_value("ShowIconsCommand", &format!("\"{}\" show-icons", exe_path))?;
 
         // Only update IconsVisible if it hasn't been set already
-        if let Err(_) = spad_installinfo.get_value::<u32, _>("IconsVisible") {
-            spad_installinfo.set_value("IconsVisible", &1u32)?;
+        if let Err(_) = dprog_installinfo.get_value::<u32, _>("IconsVisible") {
+            dprog_installinfo.set_value("IconsVisible", &1u32)?;
         }
 
-        let (spad_shell_open_command, _) = spad.create_subkey(r"shell\open\command")?;
-        spad_shell_open_command.set_value("", &open_command)?;
+        let (dprog_shell_open_command, _) = dprog.create_subkey(r"shell\open\command")?;
+        dprog_shell_open_command.set_value("", &open_command)?;
     }
 
-    // Set up a registered application for our SPAD capabilities (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#registeredapplications)
+    // Set up a registered application for our Default Programs capabilities (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#registeredapplications)
     {
         let (registered_applications, _) =
             hkcu.create_subkey(r"SOFTWARE\RegisteredApplications")?;
-        let spad_capabilities_path = format!(r"{}\Capabilities", SPAD_PATH);
-        registered_applications.set_value(DISPLAY_NAME, &spad_capabilities_path)?;
+        let dprog_capabilities_path = format!(r"{}\Capabilities", DPROG_PATH);
+        registered_applications.set_value(DISPLAY_NAME, &dprog_capabilities_path)?;
     }
 
     // Application Registration (https://docs.microsoft.com/en-us/windows/win32/shell/app-registration)
     {
-        let (bichrome_registration, _) = hkcu.create_subkey(APPREG_PATH)?;
+        let appreg_path = format!(r"{}{}", APPREG_BASE, exe_name);
+        let (appreg, _) = hkcu.create_subkey(appreg_path)?;
         // This is used to resolve "bichrome.exe" -> full path, if needed.
-        bichrome_registration.set_value("", &exe_path)?;
+        appreg.set_value("", &exe_path)?;
         // UseUrl indicates that we don't need the shell to download a file for us -- we can handle direct
         // HTTP URLs.
-        bichrome_registration.set_value("UseUrl", &1u32)?;
+        appreg.set_value("UseUrl", &1u32)?;
     }
 
     refresh_shell();
@@ -153,12 +162,11 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
 }
 
 fn refresh_shell() {
-    use windows_bindings::windows::win32::shell::SHCNE_ID;
-    use windows_bindings::windows::win32::shell::SHCNF_FLAGS;
+    use windows_bindings::windows::win32::shell::{SHChangeNotify, SHCNE_ID, SHCNF_FLAGS};
 
     // Notify the shell about the updated URL associations. (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#becoming-the-default-browser)
     unsafe {
-        windows_bindings::windows::win32::shell::SHChangeNotify(
+        SHChangeNotify(
             SHCNE_ID::SHCNE_ASSOCCHANGED,
             SHCNF_FLAGS::SHCNF_DWORD | SHCNF_FLAGS::SHCNF_FLUSH,
             std::ptr::null_mut(),
@@ -169,11 +177,22 @@ fn refresh_shell() {
 
 /// Remove all the registry keys that we've set up
 fn unregister_urlhandler() {
+    use std::env::current_exe;
+
+    // Find the current executable's name, so we can unregister it
+    let exe_name = current_exe()
+        .unwrap()
+        .file_name()
+        .map(|s| s.to_str())
+        .flatten()
+        .unwrap_or_default()
+        .to_owned();
+
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let _ = hkcu.delete_subkey_all(SPAD_PATH);
-    let _ = hkcu.delete_subkey_all(CLSID_PATH);
+    let _ = hkcu.delete_subkey_all(DPROG_PATH);
+    let _ = hkcu.delete_subkey_all(PROGID_PATH);
     let _ = hkcu.delete_subkey(REGISTERED_APPLICATIONS_PATH);
-    let _ = hkcu.delete_subkey_all(APPREG_PATH);
+    let _ = hkcu.delete_subkey_all(format!("{}{}", APPREG_BASE, exe_name));
     refresh_shell();
 }
 
@@ -181,16 +200,16 @@ fn unregister_urlhandler() {
 fn show_icons() -> io::Result<()> {
     // The expectations for this are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-show-icons-command
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let (spad_installinfo, _) = hkcu.create_subkey(SPAD_INSTALLINFO_PATH)?;
-    spad_installinfo.set_value("IconsVisible", &1u32)
+    let (dprog_installinfo, _) = hkcu.create_subkey(DPROG_INSTALLINFO_PATH)?;
+    dprog_installinfo.set_value("IconsVisible", &1u32)
 }
 
 /// Set the "IconsVisible" flag to false (we don't have any icons)
 fn hide_icons() -> io::Result<()> {
     // The expectations for this are documented here: https://docs.microsoft.com/en-us/windows/win32/shell/reg-middleware-apps#the-hide-icons-command
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    if let Ok(spad_installinfo) = hkcu.open_subkey(SPAD_INSTALLINFO_PATH) {
-        spad_installinfo.set_value("IconsVisible", &0u32)
+    if let Ok(dprog_installinfo) = hkcu.open_subkey(DPROG_INSTALLINFO_PATH) {
+        dprog_installinfo.set_value("IconsVisible", &0u32)
     } else {
         Ok(())
     }
