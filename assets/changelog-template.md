@@ -19,7 +19,7 @@ That's it! Now just create a configuration file named `bichrome_config.json` nex
 1. Download `bichrome-macos.zip` from [this release][macos_download].
 2. Extract it and copy the `bichrome` app e.g. to `/Applications`
 3. Open System Preferences and search for "Default Browser"
-4. Pick bichrome as youre default browser.
+4. Pick bichrome as your default browser.
 
 That's it! Now just create a configuration file named `bichrome_config.json` in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` (see [the configuration section][config_readme] for details) -- a good starting place is to download & edit the [example config][example_config].
 
