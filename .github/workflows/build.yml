@@ -21,6 +21,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install GNU tar # Workaround for https://github.com/actions/cache/issues/403
+      if: runner.os == 'macOS'
+      run: |
+        brew install gnu-tar
+        echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
     - uses: actions/cache@v2
       with:
         path: |
@@ -29,8 +34,8 @@ jobs:
           target
           changelog_generator/target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-
+        # restore-keys: |
+        #   ${{ runner.os }}-cargo-
     - name: Build (bichrome)
       run: cargo build --verbose
     - name: Build (changelog_generator)

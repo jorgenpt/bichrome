@@ -68,7 +68,6 @@ dependencies = [
  "fruitbasket",
  "log",
  "serde",
- "serde_derive",
  "serde_json",
  "simplelog",
  "structopt",
