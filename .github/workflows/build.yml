@@ -34,8 +34,8 @@ jobs:
           target
           changelog_generator/target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-        # restore-keys: |
-        #   ${{ runner.os }}-cargo-
+        restore-keys: |
+          ${{ runner.os }}-cargo-
     - name: Build (bichrome)
       run: cargo build --verbose
     - name: Build (changelog_generator)
