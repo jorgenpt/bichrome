@@ -12,5 +12,4 @@ serde_derive = "1.0"
 
 [dependencies.git-changelog]
 default-features = false
-git = "https://github.com/jorgenpt/git-changelog"
-branch = "bichrome-version"
+git = "https://github.com/aldrin/git-changelog"
