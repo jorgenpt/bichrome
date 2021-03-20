@@ -225,7 +225,7 @@ dependencies = [
 [[package]]
 name = "fruitbasket"
 version = "0.9.2-rc"
-source = "git+https://github.com/jorgenpt/fruitbasket?branch=open-file-support#c192cd4fbf2c7a8dc94684d5400f679106565429"
+source = "git+https://github.com/mrmekon/fruitbasket#7db3c18b5a7c8bcade41c94b3757e04759df4f4e"
 dependencies = [
  "dirs",
  "objc",

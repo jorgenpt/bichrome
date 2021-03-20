@@ -22,7 +22,7 @@ windows_bindings = { path = "windows_bindings" }
 winreg = "0.8"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-fruitbasket = { git = "https://github.com/jorgenpt/fruitbasket", branch = "open-file-support" }
+fruitbasket = { git = "https://github.com/mrmekon/fruitbasket" }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "^0.1"
