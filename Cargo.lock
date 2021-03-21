@@ -486,6 +486,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "directories-next"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "339ee130d97a610ea5a5872d2bbb130fdf68884ff09d3028b81bec8a1ac23bbc"
+dependencies = [
+ "cfg-if 1.0.0",
+ "dirs-sys-next",
+]
+
+[[package]]
 name = "dirs"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -502,7 +512,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e93d7f5705de3e49895a2b5e0b8855a1c27f080192ae9c32a6432d50741a57a"
 dependencies = [
  "libc",
- "redox_users",
+ "redox_users 0.3.5",
+ "winapi 0.3.9",
+]
+
+[[package]]
+name = "dirs-sys-next"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ebda144c4fe02d1f7ea1a7d9641b6fc6b580adcfa024ae48797ecdeb6825b4d"
+dependencies = [
+ "libc",
+ "redox_users 0.4.0",
  "winapi 0.3.9",
 ]
 
@@ -555,6 +576,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04fa506a0f70b14bc9d04b59b862e621521728df5beae4403ce69a033658f78f"
 dependencies = [
  "epaint",
+ "serde",
 ]
 
 [[package]]
@@ -564,9 +586,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7dac409ab9b1d83620e54c1a4f7f0a247b28f192b2f9185a5410277bc907ae7"
 dependencies = [
  "clipboard",
+ "directories-next",
  "egui",
  "epi",
  "glium",
+ "serde",
+ "serde_json",
  "webbrowser",
 ]
 
@@ -579,6 +604,8 @@ dependencies = [
  "egui",
  "epi",
  "js-sys",
+ "serde",
+ "serde_json",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -589,6 +616,9 @@ name = "emath"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "632c6ab1d569238921dc1e590640862ffb09226b0483f3b60950a3ec34f84b48"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "epaint"
@@ -600,6 +630,7 @@ dependencies = [
  "atomic_refcell",
  "emath",
  "rusttype",
+ "serde",
 ]
 
 [[package]]
@@ -609,6 +640,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3092dca4ab12b5f1ce942440526ae797d996bedc503b70f1ec484f8da408059e"
 dependencies = [
  "egui",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1361,6 +1394,16 @@ dependencies = [
  "getrandom 0.1.16",
  "redox_syscall 0.1.57",
  "rust-argon2",
+]
+
+[[package]]
+name = "redox_users"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "528532f3d801c87aec9def2add9ca802fe569e44a544afe633765267840abe64"
+dependencies = [
+ "getrandom 0.2.2",
+ "redox_syscall 0.2.5",
 ]
 
 [[package]]
