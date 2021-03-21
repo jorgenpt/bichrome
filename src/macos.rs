@@ -56,14 +56,14 @@ fn init() -> Configuration {
                 Err(e) => {
                     error!("failed to parse config: {:?}", e);
                     warn!("opening URLs without profile");
-                    Configuration::empty()
+                    Configuration::default()
                 }
             }
         }
         None => {
             error!("failed to determine config path");
             warn!("opening URLs without profile");
-            Configuration::empty()
+            Configuration::default()
         }
     }
 }

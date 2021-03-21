@@ -129,7 +129,7 @@ pub struct ProfilePattern {
     pub pattern: Pattern,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Configuration {
     pub default_profile: Option<String>,
     pub profiles: HashMap<String, Browser>,
@@ -137,14 +137,6 @@ pub struct Configuration {
 }
 
 impl Configuration {
-    pub fn empty() -> Configuration {
-        Configuration {
-            default_profile: None,
-            profiles: HashMap::new(),
-            profile_selection: Vec::new(),
-        }
-    }
-
     pub fn read_from_file<P: AsRef<Path>>(path: P) -> Result<Configuration> {
         let file = File::open(path).map_err(Error::InvalidFile)?;
         let reader = BufReader::new(file);

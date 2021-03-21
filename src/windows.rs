@@ -339,7 +339,7 @@ fn read_config() -> io::Result<Configuration> {
         Err(e) => {
             error!("failed to parse config: {:?}", e);
             warn!("opening URLs without profile");
-            Configuration::empty()
+            Configuration::default()
         }
     })
 }
