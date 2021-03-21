@@ -1,18 +1,14 @@
 use crate::config::Configuration;
+use crate::os::get_config_path;
 use eframe::{egui, epi};
 
-// App state is automatically loaded when the app runs
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Default)]
+pub struct RuntimeState {}
+
+#[derive(Default)]
 pub struct ConfigGui {
     configuration: Configuration,
-}
-
-impl Default for ConfigGui {
-    fn default() -> Self {
-        Self {
-            configuration: Configuration::empty(),
-        }
-    }
+    runtime_state: RuntimeState,
 }
 
 impl epi::App for ConfigGui {
@@ -20,12 +16,16 @@ impl epi::App for ConfigGui {
         "bichrome configuration"
     }
 
-    fn load(&mut self, storage: &dyn epi::Storage) {
-        *self = epi::get_value(storage, epi::APP_KEY).unwrap_or_default()
+    fn load(&mut self, _: &dyn epi::Storage) {
+        *self = Self {
+            configuration: Configuration::read_from_file(get_config_path().unwrap_or_default())
+                .unwrap_or_default(),
+            runtime_state: RuntimeState::default(),
+        }
     }
 
-    fn save(&mut self, storage: &mut dyn epi::Storage) {
-        epi::set_value(storage, epi::APP_KEY, self);
+    fn save(&mut self, _: &mut dyn epi::Storage) {
+        // TODO: Write out the modified configuration
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.

@@ -326,6 +326,10 @@ fn init() -> Result<CommandOptions> {
     Ok(options)
 }
 
+pub fn get_config_path() -> Option<PathBuf> {
+    get_exe_relative_path("bichrome_config.json").ok()
+}
+
 fn read_config() -> io::Result<Configuration> {
     let config_path = get_exe_relative_path("bichrome_config.json")?;
     // We try to read the config, and otherwise just use an empty one instead.

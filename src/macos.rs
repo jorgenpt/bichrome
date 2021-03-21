@@ -36,7 +36,7 @@ fn get_log_path() -> Option<PathBuf> {
     get_application_support_path().map(|path| path.join("com.bitspatter.bichrome/bichrome.log"))
 }
 
-fn get_config_path() -> Option<PathBuf> {
+pub fn get_config_path() -> Option<PathBuf> {
     get_application_support_path()
         .map(|path| path.join("com.bitspatter.bichrome/bichrome_config.json"))
 }
