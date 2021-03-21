@@ -7,19 +7,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![cfg_attr(debug_assertions, windows_subsystem = "console")]
 
-mod chrome_local_state;
-mod config;
-
-#[cfg(target_os = "macos")]
-mod macos;
-#[cfg(target_os = "macos")]
-use macos as os;
-
-#[cfg(target_os = "windows")]
-mod windows;
-#[cfg(target_os = "windows")]
-use windows as os;
+use bichrome;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    Ok(os::main()?)
+    Ok(bichrome::os::main()?)
 }
