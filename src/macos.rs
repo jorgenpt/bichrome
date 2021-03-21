@@ -1,4 +1,5 @@
 use crate::config::{Browser, Configuration};
+use crate::gui;
 use fruitbasket::FruitApp;
 use fruitbasket::FruitCallbackKey;
 use fruitbasket::RunPeriod;
@@ -9,6 +10,7 @@ use std::{
     fs::File,
     path::PathBuf,
     process::{Command, Stdio},
+    sync::atomic::{AtomicBool, Ordering},
 };
 use url::Url;
 
@@ -128,6 +130,10 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     ));
     CombinedLogger::init(loggers)?;
 
+    let (handled_url, handled_file) = (AtomicBool::new(false), AtomicBool::new(false));
+    let handled_url = &handled_url;
+    let handled_file = &handled_file;
+
     let mut app = FruitApp::new();
 
     let stopper = app.stopper();
@@ -141,21 +147,26 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     // Register a callback to get receive custom URL schemes from any Mac program
     app.register_apple_event(fruitbasket::kInternetEventClass, fruitbasket::kAEGetURL);
     let stopper = app.stopper();
-    app.register_callback(
-        FruitCallbackKey::Method("handleEvent:withReplyEvent:"),
-        Box::new(move |event| {
+    let handle_url_callback = {
+        move |event| {
             let url: String = fruitbasket::parse_url_event(event);
+            handled_url.store(true, Ordering::Relaxed);
             if let Err(error) = handle_url(&url) {
                 panic!("error handling url: {}", error);
             }
             stopper.stop();
-        }),
+        }
+    };
+    app.register_callback(
+        FruitCallbackKey::Method("handleEvent:withReplyEvent:"),
+        Box::new(handle_url_callback),
     );
 
     let stopper = app.stopper();
     app.register_callback(
         FruitCallbackKey::Method("application:openFile:"),
         Box::new(move |file| {
+            handled_file.store(true, Ordering::Relaxed);
             let file = fruitbasket::nsstring_to_string(file);
             let url = Url::from_file_path(file).expect("Unable to convert file path to URL");
             if let Err(error) = handle_url(&url.to_string()) {
@@ -167,6 +178,10 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     // Run 'forever', until the URL callback fires
     let _ = app.run(RunPeriod::Forever);
+
+    if !handled_file.load(Ordering::Relaxed) && !handled_url.load(Ordering::Relaxed) {
+        gui::run();
+    }
 
     fruitbasket::FruitApp::terminate(0);
 

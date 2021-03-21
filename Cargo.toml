@@ -33,3 +33,6 @@ OriginalFilename = "bichrome.exe"
 FileDescription = "bichrome"
 ProductName = "bichrome"
 LegalCopyright = "© Jørgen Tjernø <jorgenpt@gmail.com>"
+
+[[bin]]
+name = "config_gui"

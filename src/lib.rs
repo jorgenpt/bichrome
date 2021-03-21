@@ -1,5 +1,6 @@
 pub mod chrome_local_state;
 pub mod config;
+pub mod gui;
 
 // Import os-specific code for macOS, if appropriate
 #[cfg(target_os = "macos")]
