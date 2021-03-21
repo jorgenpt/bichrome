@@ -34,7 +34,7 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum ChromeProfile {
     ByName {
@@ -45,6 +45,30 @@ pub enum ChromeProfile {
         hosted_domain: String,
     },
     None {},
+}
+
+impl std::fmt::Display for ChromeProfile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ChromeProfile::None {} => {
+                write!(f, "most recent window")
+            }
+            ChromeProfile::ByHostedDomain { hosted_domain } => {
+                if hosted_domain.is_empty() {
+                    write!(f, "specific domain account")
+                } else {
+                    write!(f, "{} account", hosted_domain)
+                }
+            }
+            ChromeProfile::ByName { name } => {
+                if name.is_empty() {
+                    write!(f, "specific profile")
+                } else {
+                    write!(f, "{} profile", name)
+                }
+            }
+        }
+    }
 }
 
 impl ChromeProfile {
@@ -71,7 +95,7 @@ impl ChromeProfile {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "browser")]
 pub enum Browser {
     Chrome(ChromeProfile),
@@ -79,6 +103,24 @@ pub enum Browser {
     #[serde(alias = "Safari")]
     #[serde(alias = "Edge")]
     OsDefault,
+}
+
+impl std::fmt::Display for Browser {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Browser::Chrome(profile) => write!(f, "Chrome ({})", profile),
+            Browser::Firefox => write!(f, "Firefox"),
+            Browser::OsDefault => {
+                if cfg!(target_os = "macos") {
+                    write!(f, "Safari")
+                } else if cfg!(target_os = "windows") {
+                    write!(f, "Edge")
+                } else {
+                    panic!("Unsupported platform");
+                }
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
