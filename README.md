@@ -83,7 +83,7 @@ You can find an example config in [example_config/bichrome_config.json][example_
 
 ## License
 
-[The icon](assets/bichrome_icon.png) is copyright (c) 2021 [Jørgen P. Tjernø](mailto:jorgenpt@gmail.com). All Rights Reserved.
+[The icon](assets/bichrome_icon.png) is copyright (c) 2021 [Jørgen P. Tjernø](mailto:jorgen@tjer.no). All Rights Reserved.
 
 The source code is licensed under either of
 
