@@ -1,5 +1,5 @@
 fn main() {
     windows::build!(
-        windows::win32::shell::*, windows::storage::UserDataPaths
+        Windows::Win32::UI::Shell::*, Windows::Storage::UserDataPaths
     );
 }

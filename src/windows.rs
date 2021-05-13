@@ -162,13 +162,15 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
 }
 
 fn refresh_shell() {
-    use windows_bindings::windows::win32::shell::{SHChangeNotify, SHCNE_ID, SHCNF_FLAGS};
+    use windows_bindings::Windows::Win32::UI::Shell::{
+        SHChangeNotify, SHCNE_ASSOCCHANGED, SHCNF_DWORD, SHCNF_FLUSH,
+    };
 
     // Notify the shell about the updated URL associations. (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#becoming-the-default-browser)
     unsafe {
         SHChangeNotify(
-            SHCNE_ID::SHCNE_ASSOCCHANGED,
-            SHCNF_FLAGS::SHCNF_DWORD | SHCNF_FLAGS::SHCNF_FLUSH,
+            SHCNE_ASSOCCHANGED,
+            SHCNF_DWORD | SHCNF_FLUSH,
             std::ptr::null_mut(),
             std::ptr::null_mut(),
         );
@@ -216,9 +218,9 @@ fn hide_icons() -> io::Result<()> {
 }
 
 fn get_local_app_data_path() -> Option<PathBuf> {
-    use windows_bindings::windows::storage::UserDataPaths;
-    if let Ok(user_data_paths) = UserDataPaths::get_default() {
-        if let Ok(local_app_data_path) = user_data_paths.local_app_data() {
+    use windows_bindings::Windows::Storage::UserDataPaths;
+    if let Ok(user_data_paths) = UserDataPaths::GetDefault() {
+        if let Ok(local_app_data_path) = user_data_paths.LocalAppData() {
             return Some(PathBuf::from(local_app_data_path.to_string()));
         }
     }
