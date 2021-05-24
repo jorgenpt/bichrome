@@ -11,6 +11,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+      - name: Install GNU tar # Workaround for https://github.com/actions/cache/issues/403
+        if: runner.os == 'macOS'
+        run: |
+          brew install gnu-tar
+          echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            changelog_generator/target
+          key: ${{ runner.os }}-clippy_cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-clippy_cargo-
       - run: rustup component add clippy
       - uses: actions-rs/clippy-check@v1
         with:
