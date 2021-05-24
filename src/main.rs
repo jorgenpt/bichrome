@@ -20,6 +20,8 @@ mod windows;
 #[cfg(target_os = "windows")]
 use windows as os;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    Ok(os::main()?)
+use anyhow::Result;
+
+fn main() -> Result<()> {
+    os::main()
 }

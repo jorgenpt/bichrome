@@ -1,4 +1,5 @@
 use crate::config::{Browser, Configuration};
+use anyhow::Result;
 use fruitbasket::FruitApp;
 use fruitbasket::FruitCallbackKey;
 use fruitbasket::RunPeriod;
@@ -113,7 +114,7 @@ fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn main() -> Result<(), Box<dyn Error>> {
+pub fn main() -> Result<()> {
     let log_level = LevelFilter::Debug;
     let log_path = get_log_path().unwrap();
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
