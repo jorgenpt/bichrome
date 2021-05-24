@@ -10,7 +10,6 @@ use std::{
     process::{Command, Stdio},
 };
 use structopt::StructOpt;
-use windows_bindings;
 use winreg::{enums::*, RegKey};
 
 // How many bytes do we let the log size grow to before we rotate it? We only keep one current and one old log.
@@ -129,7 +128,10 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
         dprog_installinfo.set_value("ShowIconsCommand", &format!("\"{}\" show-icons", exe_path))?;
 
         // Only update IconsVisible if it hasn't been set already
-        if let Err(_) = dprog_installinfo.get_value::<u32, _>("IconsVisible") {
+        if dprog_installinfo
+            .get_value::<u32, _>("IconsVisible")
+            .is_err()
+        {
             dprog_installinfo.set_value("IconsVisible", &1u32)?;
         }
 
@@ -282,12 +284,11 @@ fn get_exe_relative_path(filename: &str) -> io::Result<PathBuf> {
 
 fn rotate_and_open_log(log_path: &Path) -> Result<File, io::Error> {
     if let Ok(log_info) = std::fs::metadata(&log_path) {
-        if log_info.len() > MAX_LOG_SIZE {
-            if let Err(_) = std::fs::rename(&log_path, log_path.with_extension("log.old")) {
-                if let Err(_) = std::fs::remove_file(log_path) {
-                    return File::create(log_path);
-                }
-            }
+        if log_info.len() > MAX_LOG_SIZE
+            && std::fs::rename(&log_path, log_path.with_extension("log.old")).is_err()
+            && std::fs::remove_file(log_path).is_err()
+        {
+            return File::create(log_path);
         }
     }
 
@@ -306,13 +307,12 @@ fn init() -> Result<CommandOptions> {
     };
 
     let log_path = get_exe_relative_path("bichrome.log")?;
-    let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
     // Always log to bichrome.log
-    loggers.push(WriteLogger::new(
+    let mut loggers: Vec<Box<dyn SharedLogger>> = vec![WriteLogger::new(
         log_level,
         Config::default(),
         rotate_and_open_log(&log_path)?,
-    ));
+    )];
     // We only use the terminal logger in the debug build, since we don't allocate a console window otherwise.
     if cfg!(debug_assertions) {
         loggers.push(TermLogger::new(
