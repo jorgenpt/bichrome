@@ -134,7 +134,7 @@ impl Configuration {
 
         // If there's a default_profile, use that, otherwise default to a Chrome without profiles.
         if let Some(default_profile) = &self.default_profile {
-            self.get_profile(&default_profile).map(|b| b.clone())
+            self.get_profile(default_profile).map(|b| b.clone())
         } else {
             Ok(Browser::Chrome(ChromeProfile::None {}))
         }

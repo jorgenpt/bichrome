@@ -70,7 +70,7 @@ fn init() -> Configuration {
 fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
     let config = init();
 
-    let browser = config.choose_browser(&url)?;
+    let browser = config.choose_browser(url)?;
     let (exe, args) = match browser {
         Browser::Chrome(profile) => {
             if let Some(argument) = profile.get_argument()? {
