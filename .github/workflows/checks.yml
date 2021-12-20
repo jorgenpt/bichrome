@@ -10,7 +10,7 @@ jobs:
         os: [ windows-latest, macos-latest ]
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Install GNU tar # Workaround for https://github.com/actions/cache/issues/403
         if: runner.os == 'macOS'
         run: |
