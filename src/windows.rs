@@ -163,9 +163,7 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
 }
 
 fn refresh_shell() {
-    use windows::Win32::UI::Shell::{
-        SHChangeNotify, SHCNE_ASSOCCHANGED, SHCNF_DWORD, SHCNF_FLUSH,
-    };
+    use windows::Win32::UI::Shell::{SHChangeNotify, SHCNE_ASSOCCHANGED, SHCNF_DWORD, SHCNF_FLUSH};
 
     // Notify the shell about the updated URL associations. (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#becoming-the-default-browser)
     unsafe {
@@ -426,6 +424,15 @@ pub fn main() -> Result<()> {
                 if options.dry_run {
                     info!("(dry-run) {}", commandline);
                 } else {
+                    // Allow any process to steal focus from us, so that we will transfer focus "nicely" to
+                    // the browser.
+                    use windows::Win32::UI::WindowsAndMessaging::{
+                        AllowSetForegroundWindow, ASFW_ANY,
+                    };
+                    unsafe {
+                        AllowSetForegroundWindow(ASFW_ANY);
+                    }
+
                     // Let's not log the URL to the logs by default, so there's not a gross log file
                     // the user might not be aware of inadvertently 'tracking' their browsing activity.
                     info!("picked {:?}", &browser);
