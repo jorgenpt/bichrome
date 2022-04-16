@@ -317,6 +317,7 @@ fn init() -> Result<CommandOptions> {
             log_level,
             Config::default(),
             TerminalMode::Mixed,
+            ColorChoice::Auto,
         ));
     };
 
