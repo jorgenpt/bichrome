@@ -126,6 +126,7 @@ pub fn main() -> Result<()> {
         log_level,
         Config::default(),
         TerminalMode::Mixed,
+        ColorChoice::Auto,
     ));
     CombinedLogger::init(loggers)?;
 
