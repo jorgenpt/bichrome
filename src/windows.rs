@@ -163,7 +163,7 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
 }
 
 fn refresh_shell() {
-    use windows_bindings::Windows::Win32::UI::Shell::{
+    use windows::Win32::UI::Shell::{
         SHChangeNotify, SHCNE_ASSOCCHANGED, SHCNF_DWORD, SHCNF_FLUSH,
     };
 
@@ -218,7 +218,7 @@ fn hide_icons() -> io::Result<()> {
 }
 
 fn get_local_app_data_path() -> Option<PathBuf> {
-    use windows_bindings::Windows::Storage::UserDataPaths;
+    use windows::Storage::UserDataPaths;
     if let Ok(user_data_paths) = UserDataPaths::GetDefault() {
         if let Ok(local_app_data_path) = user_data_paths.LocalAppData() {
             return Some(PathBuf::from(local_app_data_path.to_string()));
