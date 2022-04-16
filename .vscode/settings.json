@@ -2,5 +2,8 @@
     "rust-analyzer.files.excludeDirs": [
         "windows_bindings"
     ],
-    "rust-analyzer.checkOnSave.command": "clippy"
+    "rust-analyzer.checkOnSave.command": "clippy",
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-workflow.json": ".github/workflows/build.yml"
+    }
 }
