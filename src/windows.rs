@@ -57,8 +57,7 @@ fn register_urlhandler(extra_args: Option<&str>) -> io::Result<()> {
     let exe_path = current_exe()?;
     let exe_name = exe_path
         .file_name()
-        .map(|s| s.to_str())
-        .flatten()
+        .and_then(|s| s.to_str())
         .unwrap_or_default()
         .to_owned();
 
@@ -187,8 +186,7 @@ fn unregister_urlhandler() {
     let exe_name = current_exe()
         .unwrap()
         .file_name()
-        .map(|s| s.to_str())
-        .flatten()
+        .and_then(|s| s.to_str())
         .unwrap_or_default()
         .to_owned();
 
