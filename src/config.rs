@@ -72,13 +72,32 @@ impl ChromeProfile {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(untagged)]
+pub enum EdgeProfile {
+    ByName {
+        #[serde(rename = "profile")]
+        name: String,
+    },
+    None {},
+}
+
+impl EdgeProfile {
+    pub fn get_argument(&self) -> Result<Option<String>> {
+        match self {
+            EdgeProfile::ByName { name } => Ok(Some(format!("--profile-directory={}", name))),
+            EdgeProfile::None {} => Ok(None),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "browser")]
 pub enum Browser {
     Chrome(ChromeProfile),
     Firefox,
-    #[serde(alias = "Safari")]
-    #[serde(alias = "Edge")]
     OsDefault,
+    Edge(EdgeProfile),
+    Safari,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -1,4 +1,5 @@
 use crate::config::{Browser, Configuration};
+use anyhow::bail;
 use anyhow::Result;
 use fruitbasket::FruitApp;
 use fruitbasket::FruitCallbackKey;
@@ -6,7 +7,6 @@ use fruitbasket::RunPeriod;
 use log::{debug, error, trace, warn};
 use simplelog::*;
 use std::{
-    error::Error,
     fs::File,
     path::PathBuf,
     process::{Command, Stdio},
@@ -67,7 +67,7 @@ fn init() -> Configuration {
     }
 }
 
-fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
+fn handle_url(url: &str) -> Result<()> {
     let config = init();
 
     let browser = config.choose_browser(url)?;
@@ -94,12 +94,15 @@ fn handle_url(url: &str) -> Result<(), Box<dyn Error>> {
                 .collect();
             ("open".to_string(), args)
         }
-        Browser::OsDefault => {
+        Browser::OsDefault | Browser::Safari => {
             let args = ["-b", "com.apple.Safari", url]
                 .iter()
                 .map(|s| s.to_string())
                 .collect();
             ("open".to_string(), args)
+        }
+        Browser::Edge(_) => {
+            bail!("Microsoft Edge not supported on macOS")
         }
     };
 

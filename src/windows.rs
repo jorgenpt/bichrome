@@ -418,6 +418,18 @@ pub fn main() -> Result<()> {
                     }
                     Browser::Firefox => (get_exe_path("firefox.exe")?, vec![url.to_string()]),
                     Browser::OsDefault => (get_exe_path("msedge.exe")?, vec![url.to_string()]),
+                    Browser::Edge(profile) => {
+                        let mut args = Vec::new();
+                        if let Some(argument) = profile.get_argument()? {
+                            args.push(argument);
+                        }
+                        args.push(url.to_string());
+
+                        (get_exe_path("msedge.exe")?, args)
+                    }
+                    Browser::Safari => {
+                        bail!("Apple Safari not supported on Windows")
+                    }
                 };
 
                 let commandline = format!("\"{}\" \"{}\"", exe.display(), args.join("\" \""));
