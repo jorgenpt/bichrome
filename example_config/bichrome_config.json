@@ -17,6 +17,10 @@
         },
         "Most Recent Chrome Window": {
             "browser": "Chrome"
+        },
+        "That One Profile For Edge": {
+            "browser": "Edge",
+            "profile": "Profile 2"
         }
     },
     "profile_selection": [

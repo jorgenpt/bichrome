@@ -32,7 +32,7 @@ That's it! Now just create a configuration file named `bichrome_config.json` in 
 
 ## `bichrome_config.json`
 
-Configuring bichrome involves setting up a set of `profiles` that define a name and a browser (and for Chrome, optionally a browser profile name or a profile's hosted domain), and setting up a list of profile selectors that pick a profile based on matching patterns against the URL you're opening.
+Configuring bichrome involves setting up a set of `profiles` that define a name and a browser (and for Chrome, optionally a browser profile name or a profile's hosted domain), and setting up a list of profile selectors that pick a profile based on matching patterns against the URL you're opening. Profile names
 
 The following snippet shows how profiles are configured. See [the example config][example_config] for a more complete example.
 
@@ -54,7 +54,7 @@ The following snippet shows how profiles are configured. See [the example config
 
 The format for the patterns are documented in detail on [Mozilla.org](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns) or in [the documentation of the webextension_pattern crate](https://docs.rs/webextension_pattern/latest/webextension_pattern/index.html) which is used to perform the matching. Some examples can be found in the [the example config][example_config].
 
-Configuring the matching is done under the `profile_selection` key. The browser from the first selector that matches the URL will be used to open the URL. If none of the patterns match, the URL will be opened with the profile named in `default_profile`, and if that doesn't exist, it will default to using Chrome with no profile specified. (Chrome's behavior in this case is to open it in the last activated window.) A profile specifying a browser of `Safari`, `Edge`, or `OsDefault` will use Safari on macOS and Edge on Windows.
+Configuring the matching is done under the `profile_selection` key. The browser from the first selector that matches the URL will be used to open the URL. If none of the patterns match, the URL will be opened with the profile named in `default_profile`, and if that doesn't exist, it will default to using Chrome with no profile specified. (Chrome's behavior in this case is to open it in the last activated window.) A profile specifying a browser of `OsDefault` will use Safari on macOS and Edge on Windows, and `Safari` or `Edge` will open the respective browser iff it's running on a supported OS.
 
 The following snippet shows how selectors are configured. See [the example config][example_config] for a more complete example.
 
@@ -78,6 +78,10 @@ The following snippet shows how selectors are configured. See [the example confi
 `bichrome_config.json` is expected to live next to `bichrome-win64.exe` on Windows, and in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` on macOS.
 
 You can find an example config in [example_config/bichrome_config.json][example_config].
+
+Profile names for Chrome and Edge can be a little bit opaque -- the standard profile name for both of them (i.e. the first profile created) is `Default`, and then it will create profiles named `Profile 1`, `Profile 2`, and so forth. These will (on Windows) each have a folder in `%localappdata%/Google/Chrome/User Data` or `%localappdata%/Microsoft/Edge/User Data`. It might be simplest to test each name in `bichrome_config.json` to identify them -- hopefully in the future there'll be a configuration UI.
+
+For Chrome, `hosted_domain` can be the name of a Google Apps domain that you've signed in to Chrome, in which case bichrome automatically determines which profile that is.
 
 [example_config]: example_config/bichrome_config.json
 
