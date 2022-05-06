@@ -1,3 +1,5 @@
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F7CJ9YL)
+
 [![Build status](https://github.com/jorgenpt/bichrome/workflows/Build/badge.svg)](https://github.com/jorgenpt/bichrome/actions?query=workflow%3ABuild)
 
 # <img src="assets/bichrome_icon.png?raw=true" width="24"> bichrome
