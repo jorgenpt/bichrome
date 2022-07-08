@@ -26,19 +26,19 @@
     "profile_selection": [
         {
             "profile": "Personal",
-            "pattern": "*.facebook.com/"
+            "pattern": "*.facebook.com"
         },
         {
             "profile": "Personal",
-            "pattern": "*.messenger.com/"
+            "pattern": "*.messenger.com"
         },
         {
             "profile": "Work",
-            "pattern": "*.mycorp.net/"
+            "pattern": "*.mycorp.net"
         },
         {
             "profile": "Work",
-            "pattern": "mycorp.atlassian.net/"
+            "pattern": "mycorp.atlassian.net"
         }
     ]
 }
