@@ -39,6 +39,14 @@
         {
             "profile": "Work",
             "pattern": "mycorp.atlassian.net"
+        },
+        {
+            "profile": "Work",
+            "pattern": "https://github.com/MyCorp/*"
+        },
+        {
+            "profile": "Personal",
+            "pattern": "*.github.com"
         }
     ]
 }
