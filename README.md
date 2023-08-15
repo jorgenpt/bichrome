@@ -85,7 +85,7 @@ For Chrome, `hosted_domain` can be the name of a Google Apps domain that you've 
 
 ## License
 
-[The icon](assets/bichrome_icon.png) is copyright (c) 2021 [Jørgen P. Tjernø](mailto:jorgen@tjer.no). All Rights Reserved.
+[The icon](assets/bichrome_icon.png) is copyright (c) 2021-2023 [Jørgen P. Tjernø](mailto:jorgen@tjer.no). All Rights Reserved.
 
 The source code is licensed under either of
 
