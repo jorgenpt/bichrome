@@ -1,144 +1,144 @@
 name: Publish
 
 on:
-  push:
-    tags:
-      - "v*"
+    push:
+        tags:
+            - "v*"
 
 env:
-  CARGO_TERM_COLOR: always
+    CARGO_TERM_COLOR: always
 
 jobs:
-  build_windows:
-    name: Build release (Windows)
-    runs-on: windows-latest
+    build_windows:
+        name: Build release (Windows)
+        runs-on: windows-latest
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-release_cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-release_cargo-
-      - name: Build release
-        run: cargo build --release --verbose
-      - name: Archive EXE and PDB
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-release
-          path: |
-            target/release/bichrome.exe
-            target/release/bichrome.pdb
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      target
+                  key: ${{ runner.os }}-release_cargo-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-release_cargo-
+            - name: Build release
+              run: cargo build --release --verbose
+            - name: Archive EXE and PDB
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ runner.os }}-release
+                  path: |
+                      target/release/bichrome.exe
+                      target/release/bichrome.pdb
 
-  build_macos:
-    name: Build release (macOS)
-    runs-on: macos-latest
+    build_macos:
+        name: Build release (macOS)
+        runs-on: macos-latest
 
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install GNU tar # Workaround for https://github.com/actions/cache/issues/403
-        run: |
-          brew install gnu-tar
-          echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-release_cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-release_cargo-
-      - name: Build release
-        run: cargo build --release --verbose
-      - name: Prepare app bundle
-        run: |
-          mkdir -p dist
-          cp -va assets/bichrome.app dist/bichrome.app
-          cp -va target/release/bichrome dist/bichrome.app/Contents/MacOS/bichrome
-          ditto -ckv --keepParent dist/bichrome.app dist/bichrome.zip
-      - name: Archive bundle ZIP
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ runner.os }}-release
-          path: dist/bichrome.zip
+        steps:
+            - uses: actions/checkout@v2
+            - name: Install GNU tar # Workaround for https://github.com/actions/cache/issues/403
+              run: |
+                  brew install gnu-tar
+                  echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      target
+                  key: ${{ runner.os }}-release_cargo-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-release_cargo-
+            - name: Build release
+              run: cargo build --release --verbose
+            - name: Prepare app bundle
+              run: |
+                  mkdir -p dist
+                  cp -va assets/bichrome.app dist/bichrome.app
+                  cp -va target/release/bichrome dist/bichrome.app/Contents/MacOS/bichrome
+                  ditto -ckv --keepParent dist/bichrome.app dist/bichrome.zip
+            - name: Archive bundle ZIP
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ runner.os }}-release
+                  path: dist/bichrome.zip
 
-  create_release:
-    name: Publish release
-    needs: [ build_windows, build_macos ]
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0 # We need fetch depth 0 to get all the tags for determining the previous tag in the changelog generation.
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            changelog_generator/target
-          key: ${{ runner.os }}-changelog_cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-changelog_cargo-
-      - name: Download release artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: dist
-      - name: Generate changelog
-        run: |
-          set -x
-          PREVIOUS_TAG=$(git for-each-ref --count=1 --sort=-creatordate '--format=%(refname:short)' refs/tags '--no-contains=${{ github.ref }}')
-          THIS_TAG=$(git for-each-ref '--format=%(refname:short)' ${{ github.ref }})
-          cargo run --manifest-path changelog_generator/Cargo.toml -- ${PREVIOUS_TAG} ${THIS_TAG} https://github.com/${{ github.repository }} > gh-release.md
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body_path: gh-release.md
-          draft: true
-          prerelease: false
-      - name: Upload Release Asset (Windows EXE)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: dist/Windows-release/bichrome.exe
-          asset_name: bichrome-win64.exe
-          asset_content_type: application/octet-stream
-      - name: Upload Release Asset (Windows PDB)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: dist/Windows-release/bichrome.pdb
-          asset_name: bichrome-win64.pdb
-          asset_content_type: application/octet-stream
-      - name: Upload Release Asset (macOS)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: dist/macOS-release/bichrome.zip
-          asset_name: bichrome-macos.zip
-          asset_content_type: application/zip
-      - name: Upload Release Asset (example config)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: example_config/bichrome_config.json
-          asset_name: bichrome_example_config.json
-          asset_content_type: application/json
+    create_release:
+        name: Publish release
+        needs: [build_windows, build_macos]
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # We need fetch depth 0 to get all the tags for determining the previous tag in the changelog generation.
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      changelog_generator/target
+                  key: ${{ runner.os }}-changelog_cargo-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-changelog_cargo-
+            - name: Download release artifacts
+              uses: actions/download-artifact@v2
+              with:
+                  path: dist
+            - name: Generate changelog
+              run: |
+                  set -x
+                  PREVIOUS_TAG=$(git for-each-ref --count=1 --sort=-creatordate '--format=%(refname:short)' refs/tags '--no-contains=${{ github.ref }}')
+                  THIS_TAG=$(git for-each-ref '--format=%(refname:short)' ${{ github.ref }})
+                  cargo run --manifest-path changelog_generator/Cargo.toml -- ${PREVIOUS_TAG} ${THIS_TAG} https://github.com/${{ github.repository }} > gh-release.md
+            - name: Create Release
+              id: create_release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ github.ref }}
+                  release_name: Release ${{ github.ref }}
+                  body_path: gh-release.md
+                  draft: true
+                  prerelease: false
+            - name: Upload Release Asset (Windows EXE)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+                  asset_path: dist/Windows-release/bichrome.exe
+                  asset_name: bichrome-win64.exe
+                  asset_content_type: application/octet-stream
+            - name: Upload Release Asset (Windows PDB)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+                  asset_path: dist/Windows-release/bichrome.pdb
+                  asset_name: bichrome-win64.pdb
+                  asset_content_type: application/octet-stream
+            - name: Upload Release Asset (macOS)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+                  asset_path: dist/macOS-release/bichrome.zip
+                  asset_name: bichrome-macos.zip
+                  asset_content_type: application/zip
+            - name: Upload Release Asset (example config)
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+                  asset_path: example_config/bichrome_config.json
+                  asset_name: bichrome_example_config.json
+                  asset_content_type: application/json

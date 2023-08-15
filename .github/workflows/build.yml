@@ -1,42 +1,41 @@
 name: Build
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
 
 env:
-  CARGO_TERM_COLOR: always
+    CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+    build:
+        runs-on: ${{ matrix.os }}
 
-    runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [windows-latest, macos-latest]
 
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ windows-latest, macos-latest ]
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install GNU tar # Workaround for https://github.com/actions/cache/issues/403
-      if: runner.os == 'macOS'
-      run: |
-        brew install gnu-tar
-        echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
-    - uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-          changelog_generator/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-
-    - name: Build (bichrome)
-      run: cargo build --verbose
-    - name: Build (changelog_generator)
-      run: cargo build --verbose --manifest-path changelog_generator/Cargo.toml
+        steps:
+            - uses: actions/checkout@v2
+            - name: Install GNU tar # Workaround for https://github.com/actions/cache/issues/403
+              if: runner.os == 'macOS'
+              run: |
+                  brew install gnu-tar
+                  echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      target
+                      changelog_generator/target
+                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-cargo-
+            - name: Build (bichrome)
+              run: cargo build --verbose
+            - name: Build (changelog_generator)
+              run: cargo build --verbose --manifest-path changelog_generator/Cargo.toml
