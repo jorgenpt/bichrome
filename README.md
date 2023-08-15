@@ -19,7 +19,6 @@ Big thanks to Krista A. Leemhuis for the amazing icon!
 
 That's it! Now just create a configuration file named `bichrome_config.json` next to `bichrome-win64.exe` (see [the configuration section](#config) for details) -- a good starting place is to download & edit the [example config](https://raw.githubusercontent.com/jorgenpt/bichrome/main/example_config/bichrome_config.json).
 
-
 ### macOS
 
 1. Download `bichrome-macos.zip` from [the latest release](https://github.com/jorgenpt/bichrome/releases/latest).
@@ -28,7 +27,6 @@ That's it! Now just create a configuration file named `bichrome_config.json` nex
 4. Pick bichrome as your default browser.
 
 That's it! Now just create a configuration file named `bichrome_config.json` in `~/Library/Application Support/com.bitspatter.bichrome/bichrome_config.json` (see [the configuration section](#config) for details) -- a good starting place is to download & edit the [example config](https://raw.githubusercontent.com/jorgenpt/bichrome/main/example_config/bichrome_config.json).
-
 
 ## `bichrome_config.json`
 
@@ -91,10 +89,10 @@ For Chrome, `hosted_domain` can be the name of a Google Apps domain that you've 
 
 The source code is licensed under either of
 
- * Apache License, Version 2.0
-   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license
-   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+-   Apache License, Version 2.0
+    ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+-   MIT license
+    ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
 
