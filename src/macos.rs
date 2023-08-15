@@ -163,7 +163,7 @@ pub fn main() -> Result<()> {
         Box::new(move |file| {
             let file = fruitbasket::nsstring_to_string(file);
             let url = Url::from_file_path(file).expect("Unable to convert file path to URL");
-            if let Err(error) = handle_url(&url.to_string()) {
+            if let Err(error) = handle_url(url.as_ref()) {
                 panic!("error handling file path: {}", error);
             }
             stopper.stop();
