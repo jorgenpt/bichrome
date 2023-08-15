@@ -11,17 +11,17 @@ const_format = "0.2"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-simplelog = "^0.11.0"
+simplelog = "^0.12.1"
 structopt = "0.3"
 thiserror = "^1"
 url = "^2.2.0"
 webextension_pattern = { version = "0.3", features = ["serde"] }
 
 [target.'cfg(windows)'.dependencies]
-winreg = "^0.8"
+winreg = "^0.50.0"
 
 [target.'cfg(windows)'.dependencies.windows]
-version = "^0.35.0"
+version = "^0.51.0"
 features = [
     "Storage",
     "Win32_Foundation",

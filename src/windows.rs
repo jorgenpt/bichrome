@@ -167,12 +167,7 @@ fn refresh_shell() {
 
     // Notify the shell about the updated URL associations. (https://docs.microsoft.com/en-us/windows/win32/shell/default-programs#becoming-the-default-browser)
     unsafe {
-        SHChangeNotify(
-            SHCNE_ASSOCCHANGED,
-            SHCNF_DWORD | SHCNF_FLUSH,
-            std::ptr::null_mut(),
-            std::ptr::null_mut(),
-        );
+        SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_DWORD | SHCNF_FLUSH, None, None);
     }
 }
 
@@ -442,7 +437,9 @@ pub fn main() -> Result<()> {
                         AllowSetForegroundWindow, ASFW_ANY,
                     };
                     unsafe {
-                        AllowSetForegroundWindow(ASFW_ANY);
+                        if let Err(error) = AllowSetForegroundWindow(ASFW_ANY) {
+                            warn!("Could not `AllowSetForegroundWindow`: {error:?}");
+                        }
                     }
 
                     // Let's not log the URL to the logs by default, so there's not a gross log file
