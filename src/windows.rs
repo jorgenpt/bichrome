@@ -279,9 +279,9 @@ fn get_exe_relative_path(filename: &str) -> io::Result<PathBuf> {
 }
 
 fn rotate_and_open_log(log_path: &Path) -> Result<File, io::Error> {
-    if let Ok(log_info) = std::fs::metadata(&log_path) {
+    if let Ok(log_info) = std::fs::metadata(log_path) {
         if log_info.len() > MAX_LOG_SIZE
-            && std::fs::rename(&log_path, log_path.with_extension("log.old")).is_err()
+            && std::fs::rename(log_path, log_path.with_extension("log.old")).is_err()
             && std::fs::remove_file(log_path).is_err()
         {
             return File::create(log_path);
