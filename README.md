@@ -77,7 +77,7 @@ The following snippet shows how selectors are configured. See [the example confi
 
 You can find an example config in [example_config/bichrome_config.json][example_config].
 
-Profile names for Chrome and Edge can be a little bit opaque -- the standard profile name for both of them (i.e. the first profile created) is `Default`, and then it will create profiles named `Profile 1`, `Profile 2`, and so forth. These will (on Windows) each have a folder in `%localappdata%/Google/Chrome/User Data` or `%localappdata%/Microsoft/Edge/User Data`. The correct profile name for the active profile can be found in the `Profile path` key on `edge://version/` or `chrome://version/` respectively.
+Profile names for Chrome and Edge can either be the name you see in the profile list, or the internal "profile name". The latter can be a little bit opaque -- the standard profile name for both of them (i.e. the first profile created) is `Default`, and then it will create profiles named `Profile 1`, `Profile 2`, and so forth. These will (on Windows) each have a folder in `%localappdata%/Google/Chrome/User Data` or `%localappdata%/Microsoft/Edge/User Data`. The correct profile name for the active profile can be found in the `Profile path` key on `edge://version/` or `chrome://version/` respectively.
 
 For Chrome, `hosted_domain` can be the name of a Google Apps domain that you've signed in to Chrome, in which case bichrome automatically determines which profile that is.
 
