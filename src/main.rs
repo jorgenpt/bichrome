@@ -21,7 +21,12 @@ mod windows;
 use crate::windows as os;
 
 use anyhow::Result;
+use log::error;
 
 fn main() -> Result<()> {
-    os::main()
+    let result = os::main();
+    if let Err(error) = &result {
+        error!("Encountered error: {error:?}");
+    }
+    result
 }
