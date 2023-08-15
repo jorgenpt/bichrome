@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use log::trace;
 use webextension_pattern::Pattern;
 
 use crate::{
@@ -56,6 +57,7 @@ impl ChromeProfile {
                     get_chrome_local_state_path().ok_or(Error::CantLocateChromeLocalState)?;
                 let profiles = read_profiles_from_file(local_state_path)
                     .map_err(Error::CantParseChromeLocalState)?;
+                trace!("Found Chrome profiles: {profiles:?}");
                 let matching_profiles = profiles.get_profiles(hosted_domain);
                 if matching_profiles.is_empty() {
                     Err(Error::InvalidHostedDomain(hosted_domain.to_owned()))
