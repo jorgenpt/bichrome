@@ -1,6 +1,6 @@
 [package]
 name = "bichrome"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Jørgen P. Tjernø <jorgen@tjer.no>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -15,7 +15,7 @@ simplelog = "^0.11.0"
 structopt = "0.3"
 thiserror = "^1"
 url = "^2.2.0"
-webextension_pattern = { version ="0.3", features = ["serde"] }
+webextension_pattern = { version = "0.3", features = ["serde"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "^0.8"
