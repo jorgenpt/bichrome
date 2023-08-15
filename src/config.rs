@@ -27,8 +27,10 @@ pub enum Error {
     CantLocateChromeLocalState,
     #[error("unable to parse Chrome's Local State")]
     CantParseChromeLocalState(#[source] chrome_local_state::Error),
-    #[error("no profile in Chrome's Local State matched '{0}' specified in config")]
+    #[error("no profile in Chrome's Local State matched domain '{0}' specified in config")]
     InvalidHostedDomain(String),
+    #[error("no profile in Chrome's Local State matched name '{0}' specified in config")]
+    InvalidProfileName(String),
     #[error("failed to parse received url {0:?}")]
     InvalidUrlPassedIn(String, #[source] url::ParseError),
 }
@@ -50,15 +52,22 @@ pub enum ChromeProfile {
 
 impl ChromeProfile {
     pub fn get_argument(&self) -> Result<Option<String>> {
+        let local_state_path =
+            get_chrome_local_state_path().ok_or(Error::CantLocateChromeLocalState)?;
+        let profiles =
+            read_profiles_from_file(local_state_path).map_err(Error::CantParseChromeLocalState)?;
+        trace!("Found Chrome profiles: {profiles:?}");
+
         match self {
-            ChromeProfile::ByName { name } => Ok(Some(format!("--profile-directory={}", name))),
+            ChromeProfile::ByName { name } => {
+                if let Some(profile) = profiles.profile_by_name(name) {
+                    Ok(Some(format!("--profile-directory={}", profile)))
+                } else {
+                    Err(Error::InvalidProfileName(name.to_owned()))
+                }
+            }
             ChromeProfile::ByHostedDomain { hosted_domain } => {
-                let local_state_path =
-                    get_chrome_local_state_path().ok_or(Error::CantLocateChromeLocalState)?;
-                let profiles = read_profiles_from_file(local_state_path)
-                    .map_err(Error::CantParseChromeLocalState)?;
-                trace!("Found Chrome profiles: {profiles:?}");
-                let matching_profiles = profiles.get_profiles(hosted_domain);
+                let matching_profiles = profiles.profiles_by_hosted_domain(hosted_domain);
                 if matching_profiles.is_empty() {
                     Err(Error::InvalidHostedDomain(hosted_domain.to_owned()))
                 } else {

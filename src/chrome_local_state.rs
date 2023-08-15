@@ -20,6 +20,8 @@ type Result<T> = std::result::Result<T, Error>;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChromeProfile {
     hosted_domain: String,
+    name: Option<String>,
+    shortcut_name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -28,7 +30,7 @@ pub struct ProfilesData {
 }
 
 impl ProfilesData {
-    pub fn get_profiles(&self, hosted_domain: &str) -> Vec<&String> {
+    pub fn profiles_by_hosted_domain(&self, hosted_domain: &str) -> Vec<&String> {
         self.info_cache
             .iter()
             .filter_map(|(profile_name, profile)| {
@@ -39,6 +41,23 @@ impl ProfilesData {
                 }
             })
             .collect()
+    }
+    pub fn profile_by_name(&self, name: &str) -> Option<&str> {
+        // Prefer direct profile name matches
+        if let Some((profile_name, _)) = self.info_cache.get_key_value(name) {
+            return Some(profile_name);
+        }
+
+        let matched_name = Some(name.to_owned());
+        let found = self.info_cache.iter().find(|(_, profile)| {
+            profile.name == matched_name || profile.shortcut_name == matched_name
+        });
+
+        if let Some((profile_name, _)) = found {
+            Some(profile_name)
+        } else {
+            None
+        }
     }
 }
 
