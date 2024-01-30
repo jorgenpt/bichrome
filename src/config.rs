@@ -8,7 +8,7 @@ use crate::{
     os::get_chrome_local_state_path,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
@@ -102,6 +102,17 @@ impl EdgeProfile {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ExecutablePath {
+    path: String,
+}
+
+impl ExecutablePath {
+    pub fn get_path(&self) -> PathBuf {
+        PathBuf::from(&self.path)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "browser")]
 pub enum Browser {
     Chrome(ChromeProfile),
@@ -109,6 +120,7 @@ pub enum Browser {
     OsDefault,
     Edge(EdgeProfile),
     Safari,
+    Executable(ExecutablePath)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

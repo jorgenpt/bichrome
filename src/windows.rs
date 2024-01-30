@@ -425,6 +425,7 @@ pub fn main() -> Result<()> {
                     Browser::Safari => {
                         bail!("Apple Safari not supported on Windows")
                     }
+                    Browser::Executable(location) => (location.get_path(), vec![url.to_string()])
                 };
 
                 let commandline = format!("\"{}\" \"{}\"", exe.display(), args.join("\" \""));
