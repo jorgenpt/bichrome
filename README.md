@@ -81,6 +81,30 @@ Profile names for Chrome and Edge can either be the name you see in the profile 
 
 For Chrome, `hosted_domain` can be the name of a Google Apps domain that you've signed in to Chrome, in which case bichrome automatically determines which profile that is.
 
+You may also supply `Executable` as a profile's browser, along with a path to a program you would like to open certain URLs. You could, for example, use it to open YouTube links directly in your video player of choice.
+
+```json
+{
+    "default_profile": "...",
+    "profiles": {
+        "Video Player": {
+            "browser": "Executable",
+            "path": "C:/Program Files/mpv/mpv.exe"
+        }
+    },
+    "profile_selection": [
+        {
+            "profile": "Video Player",
+            "pattern": "*.youtube.com"
+        },
+        {
+            "profile": "Video Player",
+            "pattern": "youtu.be"
+        }
+    ]
+}
+```
+
 [example_config]: example_config/bichrome_config.json
 
 ## License
