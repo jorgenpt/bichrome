@@ -104,6 +104,8 @@ fn handle_url(url: &str) -> Result<()> {
         Browser::Edge(_) => {
             bail!("Microsoft Edge not supported on macOS")
         }
+        Browser::Executable(location) =>
+            (location.get_path().to_str().unwrap().to_string(), vec![url.to_string()])
     };
 
     debug!("launching \"{}\" \"{}\"", exe, args.join("\" \""));
