@@ -103,12 +103,12 @@ impl EdgeProfile {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExecutablePath {
-    path: String,
+    path: PathBuf,
 }
 
 impl ExecutablePath {
     pub fn get_path(&self) -> PathBuf {
-        PathBuf::from(&self.path)
+        self.path.clone()
     }
 }
 
