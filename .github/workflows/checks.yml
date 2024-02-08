@@ -10,13 +10,13 @@ jobs:
                 os: [windows-latest, macos-latest]
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Install GNU tar # Workaround for https://github.com/actions/cache/issues/403
               if: runner.os == 'macOS'
               run: |
                   brew install gnu-tar
                   echo "/usr/local/opt/gnu-tar/libexec/gnubin" >> $GITHUB_PATH
-            - uses: actions/cache@v3
+            - uses: actions/cache@v4
               with:
                   path: |
                       ~/.cargo/registry
