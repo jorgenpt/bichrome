@@ -18,10 +18,10 @@ url = "^2.2.0"
 webextension_pattern = { version = "0.3", features = ["serde"] }
 
 [target.'cfg(windows)'.dependencies]
-winreg = "^0.50.0"
+winreg = "^0.52.0"
 
 [target.'cfg(windows)'.dependencies.windows]
-version = "^0.51.0"
+version = "^0.52.0"
 features = [
     "Storage",
     "Win32_Foundation",
