@@ -27,12 +27,13 @@ jobs:
             - name: Build release
               run: cargo build --release --verbose
             - name: Archive EXE and PDB
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
                   name: ${{ runner.os }}-release
                   path: |
                       target/release/bichrome.exe
                       target/release/bichrome.pdb
+                  if-no-files-found: error
 
     build_macos:
         name: Build release (macOS)
@@ -58,10 +59,12 @@ jobs:
                   cp -va target/release/bichrome dist/bichrome.app/Contents/MacOS/bichrome
                   ditto -ckv --keepParent dist/bichrome.app dist/bichrome.zip
             - name: Archive bundle ZIP
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
                   name: ${{ runner.os }}-release
                   path: dist/bichrome.zip
+                  if-no-files-found: error
+                  compression-level: 0
 
     create_release:
         name: Publish release
@@ -82,7 +85,7 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-changelog_cargo-
             - name: Download release artifacts
-              uses: actions/download-artifact@v2
+              uses: actions/download-artifact@v4
               with:
                   path: dist
             - name: Generate changelog
