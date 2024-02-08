@@ -21,6 +21,10 @@
         "That One Profile For Edge": {
             "browser": "Edge",
             "profile": "Profile 2"
+        },
+        "Video Player": {
+            "browser": "Executable",
+            "path": "C:/Program Files/mpv/mpv.exe"
         }
     },
     "profile_selection": [
@@ -47,6 +51,14 @@
         {
             "profile": "Personal",
             "pattern": "*.github.com"
+        },
+        {
+            "profile": "Video Player",
+            "pattern": "*.youtube.com"
+        },
+        {
+            "profile": "Video Player",
+            "pattern": "youtu.be"
         }
     ]
 }
